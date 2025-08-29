@@ -1,5 +1,9 @@
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import SearchSettingsForm from './SearchSettingsForm.vue'
+
+const provider = ref('ChatGPT') // controlled by SearchSettingsForm
+const openMode = ref('current') // 'current' | 'new'
 
 /* v-model:open API */
 const props = defineProps({ open: { type: Boolean, default: false } })
@@ -136,29 +140,7 @@ function onSave() {
 
                 <!-- Body -->
                 <div class="p-6 space-y-8">
-                    <!-- Search Settings -->
-                    <section class="space-y-3">
-                        <h3 class="text-sm font-medium text-slate-200">Search Settings</h3>
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <label class="text-sm text-slate-300">
-                                <span class="block mb-1">Default provider</span>
-                                <select class="w-full bg-white/5 rounded-md px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]">
-                                    <option>ChatGPT</option>
-                                    <option>Google</option>
-                                    <option>DuckDuckGo</option>
-                                </select>
-                            </label>
-
-                            <label class="text-sm text-slate-300">
-                                <span class="block mb-1">Open results</span>
-                                <select class="w-full bg-white/5 rounded-md px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]">
-                                    <option>In current tab</option>
-                                    <option>In new tab</option>
-                                </select>
-                            </label>
-                        </div>
-                    </section>
-
+                    <SearchSettingsForm v-model:provider="provider" v-model:openMode="openMode" />
                     <!-- Shortcuts Manager -->
                     <section class="space-y-3">
                         <h3 class="text-sm font-medium text-slate-200">Shortcuts Manager</h3>
