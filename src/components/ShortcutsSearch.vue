@@ -5,7 +5,8 @@
     <!-- ===== Shortcuts + ChatGPT Search ===== -->
     <section class="mb-4 shrink-0" id="shortcuts">
         <div class="glass rounded-md px-4 py-3 flex items-center gap-4 overflow-hidden">
-            <div class="shortcuts-rail flex items-center gap-3 flex-nowrap overflow-x-auto pr-2">
+            <!-- Rail -->
+            <div class="shortcuts-rail flex items-center gap-3 flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain h-12 [&>a]:inline-flex [&>a]:items-center [&>a]:justify-center [&>a]:leading-none [&>a]:h-12 [&>a>i]:block [&>a>i]:leading-none">
                 <!-- Group 1 — green -->
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://www.youtube.com" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://github.com" title="GitHub"><i class="fa-brands fa-github"></i></a>
@@ -61,20 +62,36 @@
                     <i class="fa-solid fa-gear"></i>
                 </a>
             </div>
+
             <!-- Spacer -->
             <div class="flex-1"></div>
+
             <!-- Right: ChatGPT Search -->
             <form class="hidden md:flex items-center gap-2">
                 <div class="relative">
                     <i class="fa-solid fa-robot absolute left-3 top-1/2 -translate-y-1/2 opacity-70"></i>
                     <input class="pl-10 pr-3 py-2 bg-white/5 rounded-md outline-none focus:ring-2 focus:ring-[var(--ring)] text-slate-100 placeholder:[color:var(--hint)] w-[400px]" placeholder="Ask ChatGPT…" type="search" />
                 </div>
-                <button class="rounded-md bg-accent/90 hover:bg-accent px-3 py-2 text-sm font-medium" type="submit">
+
+                <button class="shrink-0 px-3 py-2 rounded-md text-slate-300 hover:text-white  hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 text-sm font-medium" type="submit">
                     Go
                 </button>
+
             </form>
         </div>
     </section>
 </template>
 
-<style scoped></style>
+<style scoped>
+/* Hide horizontal scrollbar for the shortcuts rail, but keep scrolling enabled */
+.shortcuts-rail {
+    scrollbar-width: none;
+    /* Firefox */
+}
+
+.shortcuts-rail::-webkit-scrollbar {
+    /* Chrome/Safari/Edge */
+    width: 0;
+    height: 0;
+}
+</style>

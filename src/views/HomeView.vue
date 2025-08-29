@@ -20,16 +20,16 @@ import NewsHeadlines from '@/components/NewsHeadlines.vue';
             <TaskWidget />
         </section>
         <!-- ===================== COLUMN 2 ===================== -->
-        <div class="lg:col-start-2 lg:col-end-3 flex flex-col gap-4 w-full min-h-0 h-full">
+        <section class="lg:col-start-2 lg:col-end-3 flex flex-col gap-4 w-full min-h-0 h-full">
             <WorkoutTracker />
             <SteamWishlist />
-        </div>
+        </section>
         <!-- ===================== COLUMN 3 ===================== -->
-        <div class="lg:col-start-3 lg:col-end-4 flex flex-col gap-4 w-full min-h-0 h-full">
+        <section class="lg:col-start-3 lg:col-end-4 flex flex-col gap-4 w-full min-h-0 h-full">
             <UfcEvents />
             <EaglesGames />
             <TvSchedule />
-        </div>
+        </section>
         <!-- ===================== COLUMN 4 ===================== -->
         <section class="glass rounded-md shadow-card flex flex-col w-full h-full min-h-0 overflow-hidden" id="widget-news">
             <NewsHeadlines />
