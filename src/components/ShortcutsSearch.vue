@@ -177,8 +177,7 @@ function onSearchSubmit(e) {
     <Teleport to="body">
         <div v-show="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="settings-title" id="shortcuts-settings" @click="onOverlayClick">
             <!-- Panel -->
-            <div ref="modalRef" class="w-full max-w-3xl rounded-xl glass shadow-xl outline-none">
-                <!-- Header -->
+            <div ref="modalRef" class="w-full max-w-5xl rounded-xl glass shadow-xl outline-none"> <!-- Header -->
                 <div class="flex items-center justify-between p-4 border-b border-white/10">
                     <h2 id="settings-title" class="text-lg font-semibold text-slate-100 tracking-wide">
                         Shortcuts & Search — Settings
