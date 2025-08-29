@@ -179,12 +179,7 @@ function onSearchSubmit(e) {
             <!-- Panel -->
             <div ref="modalRef" class="w-full max-w-5xl rounded-xl glass shadow-xl outline-none"> <!-- Header -->
                 <div class="flex items-center justify-between p-4 border-b border-white/10">
-                    <h2 id="settings-title" class="text-lg font-semibold text-slate-100 tracking-wide">
-                        Shortcuts & Search — Settings
-                    </h2>
-                    <button class="px-3 py-1.5 rounded-md text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 text-sm" type="button" @click="closeModal">
-                        Close
-                    </button>
+                    <h2 id="settings-title" class="text-lg font-semibold text-slate-100 tracking-wide">Shortcuts & Search</h2>
                 </div>
 
                 <!-- Body -->
