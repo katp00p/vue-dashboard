@@ -3,7 +3,7 @@
 /* Put these into Tailwind's layers so they are safe */
 @layer utilities {
   body {
-    background: url('/bg3-3440x1440.png') no-repeat center center fixed;
+    background: url('/src/backgrounds/bg11-3440x1440.png') no-repeat center center fixed;
     background-size: cover;
     color: #f8fafc;
     font-family: 'Roboto', sans-serif;
