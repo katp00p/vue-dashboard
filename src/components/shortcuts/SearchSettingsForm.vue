@@ -1,6 +1,6 @@
 <script setup>
 import { computed } from 'vue'
-import UiSelect from './UiSelect.vue'
+import UiSelect from '../ui/UiSelect.vue'
 
 const props = defineProps({
     provider: { type: String, default: 'ChatGPT' },
@@ -17,14 +17,11 @@ const openModeModel = computed({
     set: (v) => emit('update:openMode', v)
 })
 
-/* Icons for each option (Font Awesome classes).
-   DuckDuckGo brand icon isn't in FA Free; use magnifying glass as a neutral fallback. */
 const PROVIDERS = [
     { value: 'ChatGPT', label: 'ChatGPT', icon: 'fa-solid fa-robot' },
     { value: 'Google', label: 'Google', icon: 'fa-brands fa-google' },
     { value: 'DuckDuckGo', label: 'DuckDuckGo', icon: 'fa-solid fa-magnifying-glass' }
 ]
-
 const OPEN_MODES = [
     { value: 'current', label: 'In current tab', icon: 'fa-regular fa-window-maximize' },
     { value: 'new', label: 'In new tab', icon: 'fa-solid fa-up-right-from-square' }
@@ -50,5 +47,5 @@ const OPEN_MODES = [
 </template>
 
 <style scoped>
-/* No extra styles; UiSelect handles icon + popup visuals */
+/* none */
 </style>
