@@ -1,4 +1,106 @@
 <script setup>
+import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+
+/**
+ * State & Refs
+ */
+const isOpen = ref(false)
+const gearBtnRef = ref(null)
+const modalRef = ref(null)
+
+/**
+ * Utils: focusable elements selector and helpers
+ */
+const FOCUSABLE =
+    'a[href], area[href], input:not([disabled]):not([type="hidden"]), select:not([disabled]), textarea:not([disabled]), button:not([disabled]), [tabindex]:not([tabindex="-1"])'
+
+function getFocusables() {
+    const root = modalRef.value
+    if (!root) return []
+    return Array.from(root.querySelectorAll(FOCUSABLE)).filter(
+        (el) => !el.hasAttribute('disabled') && !el.getAttribute('aria-hidden')
+    )
+}
+
+/**
+ * Open / Close
+ * - Locks body scroll while modal is open
+ * - Manages focus for a11y
+ * - Adds/Removes keydown listeners for ESC and focus trap
+ */
+function openModal() {
+    isOpen.value = true
+    document.documentElement.style.overflow = 'hidden'
+    nextTick(() => {
+        const [first] = getFocusables()
+        first?.focus()
+    })
+}
+
+function closeModal() {
+    isOpen.value = false
+    document.documentElement.style.overflow = ''
+    // restore focus to the gear button
+    gearBtnRef.value?.focus()
+}
+
+function onOverlayClick(e) {
+    // only close when clicking the backdrop (not the panel)
+    if (e.target === e.currentTarget) closeModal()
+}
+
+function onKeydown(e) {
+    if (!isOpen.value) return
+
+    // ESC closes
+    if (e.key === 'Escape') {
+        e.preventDefault()
+        closeModal()
+        return
+    }
+
+    // Basic focus trap
+    if (e.key === 'Tab') {
+        const focusables = getFocusables()
+        if (focusables.length === 0) return
+
+        const first = focusables[0]
+        const last = focusables[focusables.length - 1]
+        const active = document.activeElement
+
+        if (e.shiftKey) {
+            // shift + tab
+            if (active === first || !modalRef.value?.contains(active)) {
+                e.preventDefault()
+                last.focus()
+            }
+        } else {
+            // tab
+            if (active === last || !modalRef.value?.contains(active)) {
+                e.preventDefault()
+                first.focus()
+            }
+        }
+    }
+}
+
+onMounted(() => {
+    window.addEventListener('keydown', onKeydown)
+})
+onBeforeUnmount(() => {
+    window.removeEventListener('keydown', onKeydown)
+    document.documentElement.style.overflow = ''
+})
+
+/**
+ * ChatGPT search (placeholder)
+ * We prevent full page reload and can later wire to a store or router.
+ */
+function onSearchSubmit(e) {
+    e.preventDefault()
+    // TODO: dispatch to Pinia or navigate to /search?q=...
+    // For now, no-op.
+}
 </script>
 
 <template>
@@ -43,13 +145,13 @@
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://washingtonpost.com" title="Washington Post"><i class="fa-solid fa-scroll"></i></a>
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://bloomberg.com" title="Bloomberg"><i class="fa-solid fa-chart-line"></i></a>
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://coinmarketcap.com" title="Crypto"><i class="fa-solid fa-coins"></i></a>
-                <!-- Group 10 — indigo -->
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://weather.com" title="Weather"><i class="fa-solid fa-cloud-sun"></i></a>
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://calendar.google.com" title="Calendar"><i class="fa-regular fa-calendar"></i></a>
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://maps.google.com" title="Maps"><i class="fa-solid fa-map"></i></a>
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://photos.google.com" title="Photos"><i class="fa-regular fa-image"></i></a>
+
                 <!-- Final single (pure white gear) -->
-                <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="#" title="Settings">
+                <a ref="gearBtnRef" class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition cursor-pointer" href="#" title="Settings" aria-haspopup="dialog" aria-controls="shortcuts-settings" @click.prevent="openModal">
                     <i class="fa-solid fa-gear"></i>
                 </a>
             </div>
@@ -58,19 +160,102 @@
             <div class="flex-1"></div>
 
             <!-- Right: ChatGPT Search -->
-            <form class="hidden md:flex items-center gap-2">
+            <form class="hidden md:flex items-center gap-2" @submit="onSearchSubmit">
                 <div class="relative">
                     <i class="fa-solid fa-robot absolute left-3 top-1/2 -translate-y-1/2 opacity-70"></i>
-                    <input class="pl-10 pr-3 py-2 bg-white/5 rounded-md outline-none focus:ring-2 focus:ring-[var(--ring)] text-slate-100 placeholder:[color:var(--hint)] w-[400px]" placeholder="Ask ChatGPT…" type="search" />
+                    <input class="pl-10 pr-3 py-2 bg-white/5 rounded-md outline-none focus:ring-2 focus:ring-[var(--ring)] text-slate-100 placeholder:[color:var(--hint)] w-[400px]" placeholder="Ask ChatGPT…" type="search" aria-label="Ask ChatGPT" />
                 </div>
 
-                <button class="shrink-0 px-3 py-2 rounded-md text-slate-300 hover:text-white  hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 text-sm font-medium" type="submit">
+                <button class="shrink-0 px-3 py-2 rounded-md text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 text-sm font-medium" type="submit">
                     Go
                 </button>
-
             </form>
         </div>
     </section>
+
+    <!-- ===== Settings Modal (teleported but defined here) ===== -->
+    <Teleport to="body">
+        <div v-show="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="settings-title" id="shortcuts-settings" @click="onOverlayClick">
+            <!-- Panel -->
+            <div ref="modalRef" class="w-full max-w-3xl rounded-xl glass shadow-xl outline-none">
+                <!-- Header -->
+                <div class="flex items-center justify-between p-4 border-b border-white/10">
+                    <h2 id="settings-title" class="text-lg font-semibold text-slate-100 tracking-wide">
+                        Shortcuts & Search — Settings
+                    </h2>
+                    <button class="px-3 py-1.5 rounded-md text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 text-sm" type="button" @click="closeModal">
+                        Close
+                    </button>
+                </div>
+
+                <!-- Body -->
+                <div class="p-4 space-y-6">
+                    <!-- Section: Shortcuts -->
+                    <section class="space-y-3">
+                        <h3 class="text-sm font-medium text-slate-200">Shortcuts</h3>
+                        <p class="text-sm text-slate-400">
+                            Configure which icons appear in the rail and their order (future:
+                            draggable). For now, this is a static example to scaffold state &
+                            layout.
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <label class="flex items-center gap-2 text-sm text-slate-300">
+                                <input type="checkbox" class="accent-current" checked />
+                                YouTube
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-slate-300">
+                                <input type="checkbox" class="accent-current" checked />
+                                GitHub
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-slate-300">
+                                <input type="checkbox" class="accent-current" checked />
+                                Gmail
+                            </label>
+                            <label class="flex items-center gap-2 text-sm text-slate-300">
+                                <input type="checkbox" class="accent-current" checked />
+                                Google Drive
+                            </label>
+                            <!-- …add as needed -->
+                        </div>
+                    </section>
+
+                    <!-- Section: Search -->
+                    <section class="space-y-3">
+                        <h3 class="text-sm font-medium text-slate-200">Search</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <label class="text-sm text-slate-300">
+                                <span class="block mb-1">Default provider</span>
+                                <select class="w-full bg-white/5 rounded-md px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]">
+                                    <option>ChatGPT</option>
+                                    <option>Google</option>
+                                    <option>DuckDuckGo</option>
+                                </select>
+                            </label>
+
+                            <label class="text-sm text-slate-300">
+                                <span class="block mb-1">Open results</span>
+                                <select class="w-full bg-white/5 rounded-md px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]">
+                                    <option>In current tab</option>
+                                    <option>In new tab</option>
+                                </select>
+                            </label>
+                        </div>
+                    </section>
+                </div>
+
+                <!-- Footer -->
+                <div class="p-4 border-t border-white/10 flex items-center justify-end gap-2">
+                    <button type="button" class="px-3 py-2 rounded-md text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 text-sm" @click="closeModal">
+                        Cancel
+                    </button>
+                    <button type="button" class="px-3 py-2 rounded-md bg-white/10 text-slate-100 hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-accent/40 text-sm" @click="closeModal">
+                        Save
+                    </button>
+                </div>
+            </div>
+        </div>
+    </Teleport>
 </template>
 
 <style scoped>
