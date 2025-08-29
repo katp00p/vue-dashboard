@@ -6,7 +6,6 @@ const props = defineProps({
     // Options: [{ value: string, label: string, icon?: string }]
     options: { type: Array, default: () => [] },
     ariaLabel: { type: String, default: '' },
-    // Allow icons on the left; will auto-disable padding if no icon is present
     showIconLeft: { type: Boolean, default: true }
 })
 const emit = defineEmits(['update:modelValue'])
@@ -95,33 +94,31 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
 
 <template>
     <div class="relative">
-        <!-- Trigger -->
+        <!-- Trigger (solid #4b535a) -->
         <button ref="triggerRef" type="button" class="relative w-full rounded-md px-3 py-2 text-slate-100
-             bg-slate-600 hover:bg-slate-500
              focus:outline-none focus:ring-2 focus:ring-[var(--ring)]
-             flex items-center justify-between" :class="hasIconLeft ? 'pl-9' : ''" :aria-label="ariaLabel || undefined" :aria-haspopup="'listbox'" :aria-expanded="open ? 'true' : 'false'" :aria-controls="listId" @click="toggleDropdown" @keydown="onTriggerKeydown">
-            <!-- Left icon like the searchbox -->
-            <i v-if="hasIconLeft" :class="selectedIcon + ' absolute left-3 top-1/2 -translate-y-1/2 opacity-80'" aria-hidden="true"></i>
-
+             flex items-center justify-between border
+             bg-[#4b535a] hover:bg-[#565e66] border-[#5b646c]" :class="hasIconLeft ? 'pl-9' : ''" :aria-label="ariaLabel || undefined" :aria-haspopup="'listbox'" :aria-expanded="open ? 'true' : 'false'" :aria-controls="listId" @click="toggleDropdown" @keydown="onTriggerKeydown">
+            <i v-if="hasIconLeft" :class="selectedIcon + ' absolute left-3 top-1/2 -translate-y-1/2 opacity-80'" aria-hidden="true" />
             <span class="truncate">{{ selectedLabel }}</span>
             <i class="fa-solid fa-chevron-down opacity-70 ml-3"></i>
         </button>
 
-        <!-- Popup -->
+        <!-- Popup (same solid #4b535a) -->
         <div v-show="open" ref="listRef" :id="listId" role="listbox" tabindex="-1" class="absolute left-0 right-0 mt-1 z-50 rounded-md
-             border border-slate-400 shadow-lg
-             max-h-60 overflow-auto p-1
-             bg-slate-600" @keydown="onListKeydown">
+             max-h-60 overflow-auto p-1 shadow-lg
+             bg-[#4b535a] border border-[#5b646c]" @keydown="onListKeydown">
             <div v-for="(opt, idx) in options" :key="opt.value" :data-idx="idx" role="option" :aria-selected="modelValue === opt.value ? 'true' : 'false'" class="px-3 py-2 rounded text-slate-100 cursor-pointer
-               hover:bg-slate-500 flex items-center gap-2 justify-between" :class="[
-                idx === activeIndex ? 'bg-slate-500' : '',
-                modelValue === opt.value ? 'ring-1 ring-slate-400' : ''
+               flex items-center gap-2 justify-between
+               hover:bg-[#565e66]" :class="[
+                idx === activeIndex ? 'bg-[#565e66]' : '',
+                modelValue === opt.value ? 'ring-1 ring-[#6a737d]' : ''
             ]" @mouseenter="activeIndex = idx" @click="onSelect(idx)">
                 <div class="flex items-center gap-2 min-w-0">
                     <i v-if="opt.icon" :class="opt.icon + ' text-sm opacity-80'"></i>
                     <span class="truncate">{{ opt.label }}</span>
                 </div>
-                <i v-if="modelValue === opt.value" class="fa-solid fa-check text-xs text-slate-200"></i>
+                <i v-if="modelValue === opt.value" class="fa-solid fa-check text-xs text-slate-200" />
             </div>
         </div>
     </div>

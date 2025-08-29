@@ -2,6 +2,25 @@
 import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
 import SearchSettingsForm from './SearchSettingsForm.vue'
 
+// ...
+const sampleInputRef = ref(null)
+
+function syncUiSelectPalette() {
+    const el = sampleInputRef.value
+    const root = modalRef.value
+    if (!el || !root) return
+    const cs = getComputedStyle(el)
+    const bg = cs.backgroundColor || '#2c3440'
+    const border = cs.borderColor || '#3f4756'
+    root.style.setProperty('--control-bg', bg)
+    root.style.setProperty('--control-border', border)
+}
+
+// when modal opens, sync once after render
+watch(() => open, (v) => {
+    if (v) nextTick(syncUiSelectPalette)
+})
+
 const provider = ref('ChatGPT') // controlled by SearchSettingsForm
 const openMode = ref('current') // 'current' | 'new'
 
