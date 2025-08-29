@@ -177,46 +177,16 @@ function onSearchSubmit(e) {
     <Teleport to="body">
         <div v-show="isOpen" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="settings-title" id="shortcuts-settings" @click="onOverlayClick">
             <!-- Panel -->
-            <div ref="modalRef" class="w-full max-w-5xl rounded-xl glass shadow-xl outline-none"> <!-- Header -->
+            <div ref="modalRef" class="w-full max-w-6xl max-h-[85vh] rounded-xl glass shadow-xl outline-none flex flex-col">
                 <div class="flex items-center justify-between p-4 border-b border-white/10">
                     <h2 id="settings-title" class="text-lg font-semibold text-slate-100 tracking-wide">Shortcuts & Search</h2>
                 </div>
 
                 <!-- Body -->
-                <div class="p-4 space-y-6">
-                    <!-- Section: Shortcuts -->
+                <div class="p-6 space-y-8">
+                    <!-- ===== Search Settings ===== -->
                     <section class="space-y-3">
-                        <h3 class="text-sm font-medium text-slate-200">Shortcuts</h3>
-                        <p class="text-sm text-slate-400">
-                            Configure which icons appear in the rail and their order (future:
-                            draggable). For now, this is a static example to scaffold state &
-                            layout.
-                        </p>
-
-                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-                            <label class="flex items-center gap-2 text-sm text-slate-300">
-                                <input type="checkbox" class="accent-current" checked />
-                                YouTube
-                            </label>
-                            <label class="flex items-center gap-2 text-sm text-slate-300">
-                                <input type="checkbox" class="accent-current" checked />
-                                GitHub
-                            </label>
-                            <label class="flex items-center gap-2 text-sm text-slate-300">
-                                <input type="checkbox" class="accent-current" checked />
-                                Gmail
-                            </label>
-                            <label class="flex items-center gap-2 text-sm text-slate-300">
-                                <input type="checkbox" class="accent-current" checked />
-                                Google Drive
-                            </label>
-                            <!-- …add as needed -->
-                        </div>
-                    </section>
-
-                    <!-- Section: Search -->
-                    <section class="space-y-3">
-                        <h3 class="text-sm font-medium text-slate-200">Search</h3>
+                        <h3 class="text-sm font-medium text-slate-200">Search Settings</h3>
                         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
                             <label class="text-sm text-slate-300">
                                 <span class="block mb-1">Default provider</span>
@@ -234,6 +204,164 @@ function onSearchSubmit(e) {
                                     <option>In new tab</option>
                                 </select>
                             </label>
+                        </div>
+                    </section>
+
+                    <!-- ===== Shortcuts Manager ===== -->
+                    <section class="space-y-3">
+                        <h3 class="text-sm font-medium text-slate-200">Shortcuts Manager</h3>
+                        <p class="text-sm text-slate-400">
+                            Drag icons in the left column to change order. Click an icon to edit its settings in the right panel.
+                        </p>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Left: Draggable Column (mockup) -->
+                            <div class="bg-white/5 rounded-md p-4 space-y-2">
+                                <p class="text-xs uppercase text-slate-400 mb-2">Icon Order</p>
+                                <div class="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-1">
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-youtube text-xl"></i><span class="text-slate-200 text-sm">YouTube</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-github text-xl"></i><span class="text-slate-200 text-sm">GitHub</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-regular fa-envelope text-xl"></i><span class="text-slate-200 text-sm">Gmail</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-google-drive text-xl"></i><span class="text-slate-200 text-sm">Google Drive</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-robot text-xl"></i><span class="text-slate-200 text-sm">ChatGPT</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-x-twitter text-xl"></i><span class="text-slate-200 text-sm">Twitter</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-reddit-alien text-xl"></i><span class="text-slate-200 text-sm">Reddit</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-linkedin text-xl"></i><span class="text-slate-200 text-sm">LinkedIn</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-steam text-xl"></i><span class="text-slate-200 text-sm">Steam</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-spotify text-xl"></i><span class="text-slate-200 text-sm">Spotify</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-facebook text-xl"></i><span class="text-slate-200 text-sm">Facebook</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-instagram text-xl"></i><span class="text-slate-200 text-sm">Instagram</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-tiktok text-xl"></i><span class="text-slate-200 text-sm">TikTok</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-whatsapp text-xl"></i><span class="text-slate-200 text-sm">WhatsApp</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-discord text-xl"></i><span class="text-slate-200 text-sm">Discord</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-amazon text-xl"></i><span class="text-slate-200 text-sm">Amazon</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-n text-xl"></i><span class="text-slate-200 text-sm">Netflix</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-brain text-xl"></i><span class="text-slate-200 text-sm">OpenAI</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-pinterest text-xl"></i><span class="text-slate-200 text-sm">Pinterest</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-apple text-xl"></i><span class="text-slate-200 text-sm">Apple</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-microsoft text-xl"></i><span class="text-slate-200 text-sm">Microsoft</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-slack text-xl"></i><span class="text-slate-200 text-sm">Slack</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-diagram-project text-xl"></i><span class="text-slate-200 text-sm">Asana</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-figma text-xl"></i><span class="text-slate-200 text-sm">Figma</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-dribbble text-xl"></i><span class="text-slate-200 text-sm">Dribbble</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-behance text-xl"></i><span class="text-slate-200 text-sm">Behance</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-trello text-xl"></i><span class="text-slate-200 text-sm">Trello</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-regular fa-file-lines text-xl"></i><span class="text-slate-200 text-sm">Notion</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-brands fa-medium text-xl"></i><span class="text-slate-200 text-sm">Medium</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-newspaper text-xl"></i><span class="text-slate-200 text-sm">Hacker News</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-globe text-xl"></i><span class="text-slate-200 text-sm">BBC</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-tv text-xl"></i><span class="text-slate-200 text-sm">CNN</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-regular fa-newspaper text-xl"></i><span class="text-slate-200 text-sm">NY Times</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-scroll text-xl"></i><span class="text-slate-200 text-sm">Washington Post</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-chart-line text-xl"></i><span class="text-slate-200 text-sm">Bloomberg</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-coins text-xl"></i><span class="text-slate-200 text-sm">Crypto</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-cloud-sun text-xl"></i><span class="text-slate-200 text-sm">Weather</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-regular fa-calendar text-xl"></i><span class="text-slate-200 text-sm">Calendar</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-solid fa-map text-xl"></i><span class="text-slate-200 text-sm">Maps</span>
+                                    </div>
+                                    <div class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move">
+                                        <i class="fa-regular fa-image text-xl"></i><span class="text-slate-200 text-sm">Photos</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Right: Icon Settings (mockup) -->
+                            <div class="bg-white/5 rounded-md p-4 space-y-3">
+                                <p class="text-xs uppercase text-slate-400">Icon Settings</p>
+                                <div class="space-y-4">
+                                    <label class="text-sm text-slate-300 block">
+                                        <span class="block mb-1">Label</span>
+                                        <input type="text" value="YouTube" class="w-full bg-white/10 rounded-md px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" />
+                                    </label>
+
+                                    <label class="text-sm text-slate-300 block">
+                                        <span class="block mb-1">URL</span>
+                                        <input type="text" value="https://youtube.com" class="w-full bg-white/10 rounded-md px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" />
+                                    </label>
+
+                                    <label class="text-sm text-slate-300 block">
+                                        <span class="block mb-1">Icon</span>
+                                        <input type="text" value="fa-brands fa-youtube" class="w-full bg-white/10 rounded-md px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" />
+                                    </label>
+                                </div>
+                            </div>
                         </div>
                     </section>
                 </div>
