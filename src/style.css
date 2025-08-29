@@ -1,1 +1,26 @@
 @import 'tailwindcss';
+
+/* === Global control utilities (uniform site-wide look) === */
+/* Base control: inputs, select triggers, small buttons */
+.control {
+  /* spacing & shape */
+  border-radius: 0.375rem;       /* rounded-md */
+  padding-block: 0.5rem;         /* <-- only top/bottom */
+  padding-right: 0.75rem;        /* <-- right only; let components set pl-* */
+  /* DO NOT set padding-left here, so Tailwind pl-* can win */
+
+  /* colors */
+  background-color: #4b535a;     /* global control bg */
+  border: 1px solid #5b646c;     /* subtle border */
+  color: #e2e8f0;                /* slate-200-ish text */
+  transition: background-color 120ms ease;
+}
+.control:hover { background-color: #565e66; }
+.control::placeholder { color: #cbd5e1; } /* slate-300 */
+
+/* Control surface: dropdown panels, popovers, etc. */
+.control-surface {
+  background-color: #4b535a;
+  border: 1px solid #5b646c;
+  border-radius: 0.375rem;
+}

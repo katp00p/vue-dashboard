@@ -94,20 +94,18 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
 
 <template>
     <div class="relative">
-        <!-- Trigger (solid #4b535a) -->
-        <button ref="triggerRef" type="button" class="relative w-full rounded-md px-3 py-2 text-slate-100
-             focus:outline-none focus:ring-2 focus:ring-[var(--ring)]
-             flex items-center justify-between border
-             bg-[#4b535a] hover:bg-[#565e66] border-[#5b646c]" :class="hasIconLeft ? 'pl-9' : ''" :aria-label="ariaLabel || undefined" :aria-haspopup="'listbox'" :aria-expanded="open ? 'true' : 'false'" :aria-controls="listId" @click="toggleDropdown" @keydown="onTriggerKeydown">
+        <!-- Trigger: global .control, let left padding be dynamic -->
+        <button ref="triggerRef" type="button" class="relative w-full control
+             flex items-center justify-between
+             focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" :class="hasIconLeft ? 'pl-9' : 'pl-3'" :aria-label="ariaLabel || undefined" :aria-haspopup="'listbox'" :aria-expanded="open ? 'true' : 'false'" :aria-controls="listId" @click="toggleDropdown" @keydown="onTriggerKeydown">
             <i v-if="hasIconLeft" :class="selectedIcon + ' absolute left-3 top-1/2 -translate-y-1/2 opacity-80'" aria-hidden="true" />
             <span class="truncate">{{ selectedLabel }}</span>
             <i class="fa-solid fa-chevron-down opacity-70 ml-3"></i>
         </button>
 
-        <!-- Popup (same solid #4b535a) -->
-        <div v-show="open" ref="listRef" :id="listId" role="listbox" tabindex="-1" class="absolute left-0 right-0 mt-1 z-50 rounded-md
-             max-h-60 overflow-auto p-1 shadow-lg
-             bg-[#4b535a] border border-[#5b646c]" @keydown="onListKeydown">
+        <!-- Popup: same look via .control-surface -->
+        <div v-show="open" ref="listRef" :id="listId" role="listbox" tabindex="-1" class="absolute left-0 right-0 mt-1 z-50 control-surface
+             max-h-60 overflow-auto p-1 shadow-lg" @keydown="onListKeydown">
             <div v-for="(opt, idx) in options" :key="opt.value" :data-idx="idx" role="option" :aria-selected="modelValue === opt.value ? 'true' : 'false'" class="px-3 py-2 rounded text-slate-100 cursor-pointer
                flex items-center gap-2 justify-between
                hover:bg-[#565e66]" :class="[
@@ -123,3 +121,7 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
         </div>
     </div>
 </template>
+
+<style scoped>
+/* none */
+</style>
