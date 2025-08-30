@@ -1,30 +1,42 @@
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import ShortcutsSettingsModal from './shortcuts/ShortcutsSettingsModal.vue'
+import { useShortcutsStore } from '@/stores/shortcuts'
 
-/**
- * State & Refs
- */
-const isOpen = ref(false)
-const gearBtnRef = ref(null)
+const store = useShortcutsStore()
+onMounted(() => store.hydrate())
 
-function openModal() {
-    isOpen.value = true
+const q = ref('')
+const isSettingsOpen = ref(false)
+
+function enc(s) { return encodeURIComponent(s) }
+
+function urlFor(provider, query) {
+    switch (provider) {
+        case 'Google': return `https://www.google.com/search?q=${enc(query)}`
+        case 'DuckDuckGo': return `https://duckduckgo.com/?q=${enc(query)}`
+        case 'Bing': return `https://www.bing.com/search?q=${enc(query)}`
+        case 'Perplexity': return `https://www.perplexity.ai/search?q=${enc(query)}`
+        default: return `https://www.google.com/search?q=${enc(query)}`
+    }
 }
 
-/**
- * ChatGPT search (placeholder)
- * We prevent full page reload and can later wire to a store or router.
- */
-function onSearchSubmit(e) {
-    e.preventDefault()
-    // TODO: dispatch to Pinia or navigate to /search?q=...
-    // For now, no-op.
+async function onSubmit() {
+    const text = q.value.trim()
+    if (!text) return
+
+    const href = urlFor(store.provider, text)
+
+    if (store.openMode === 'new') {
+        window.open(href, '_blank', 'noopener,noreferrer')
+    } else {
+        window.location.assign(href)
+    }
 }
 </script>
 
 <template>
-    <!-- ===== Shortcuts + ChatGPT Search ===== -->
+    <!-- ===== Shortcuts + Search ===== -->
     <section class="mb-4 shrink-0" id="shortcuts">
         <div class="glass rounded-md px-4 py-3 flex items-center gap-4 overflow-hidden">
             <!-- Rail -->
@@ -69,9 +81,8 @@ function onSearchSubmit(e) {
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://calendar.google.com" title="Calendar"><i class="fa-regular fa-calendar"></i></a>
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://maps.google.com" title="Maps"><i class="fa-solid fa-map"></i></a>
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://photos.google.com" title="Photos"><i class="fa-regular fa-image"></i></a>
-
-                <!-- Final single (pure white gear) -->
-                <a ref="gearBtnRef" class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition cursor-pointer" href="#" title="Settings" aria-haspopup="dialog" aria-controls="shortcuts-settings" @click.prevent="openModal">
+                <!-- Gear opens settings modal -->
+                <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="#" title="Settings" @click.prevent="isSettingsOpen = true">
                     <i class="fa-solid fa-gear"></i>
                 </a>
             </div>
@@ -79,21 +90,22 @@ function onSearchSubmit(e) {
             <!-- Spacer -->
             <div class="flex-1"></div>
 
-            <!-- Right: ChatGPT Search -->
-            <form class="hidden md:flex items-center gap-2" @submit="onSearchSubmit">
+            <!-- Right: Unified Search -->
+            <form class="hidden md:flex items-center gap-2" @submit.prevent="onSubmit">
                 <div class="relative">
-                    <i class="fa-solid fa-robot absolute left-3 top-1/2 -translate-y-1/2 opacity-70"></i>
-                    <input class="pl-10 pr-3 py-2 bg-white/5 rounded-md outline-none focus:ring-2 focus:ring-[var(--ring)] text-slate-100 placeholder:[color:var(--hint)] w-[400px]" placeholder="Ask ChatGPT…" type="search" aria-label="Ask ChatGPT" />
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 opacity-70"></i>
+                    <input v-model="q" class="pl-10 pr-3 py-2 bg-white/10 rounded-md outline-none focus:ring-2 focus:ring-[var(--ring)] text-slate-100 placeholder:[color:var(--hint)] w-[400px]" placeholder="Search…" type="search" autocomplete="off" />
                 </div>
 
-                <button class="shrink-0 px-3 py-2 rounded-md text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 text-sm font-medium" type="submit">
+                <button class="shrink-0 px-3 py-2 rounded-md text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 text-sm font-medium" type="submit" title="Open results">
                     Go
                 </button>
             </form>
         </div>
     </section>
 
-    <ShortcutsSettingsModal v-model:open="isOpen" />
+    <!-- Settings Modal -->
+    <ShortcutsSettingsModal v-model:open="isSettingsOpen" />
 </template>
 
 <style scoped>

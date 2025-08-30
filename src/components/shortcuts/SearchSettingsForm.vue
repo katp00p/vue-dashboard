@@ -1,27 +1,21 @@
 <script setup>
-import { computed } from 'vue'
+import { computed, onMounted } from 'vue'
 import UiSelect from '../ui/UiSelect.vue'
+import { useShortcutsStore, PROVIDER_OPTIONS } from '@/stores/shortcuts'
 
-const props = defineProps({
-    provider: { type: String, default: 'ChatGPT' },
-    openMode: { type: String, default: 'current' }
-})
-const emit = defineEmits(['update:provider', 'update:openMode'])
+const store = useShortcutsStore()
+onMounted(() => store.hydrate())
 
 const providerModel = computed({
-    get: () => props.provider,
-    set: (v) => emit('update:provider', v)
-})
-const openModeModel = computed({
-    get: () => props.openMode,
-    set: (v) => emit('update:openMode', v)
+    get: () => store.provider,
+    set: (v) => store.setProvider(v)
 })
 
-const PROVIDERS = [
-    { value: 'ChatGPT', label: 'ChatGPT', icon: 'fa-solid fa-robot' },
-    { value: 'Google', label: 'Google', icon: 'fa-brands fa-google' },
-    { value: 'DuckDuckGo', label: 'DuckDuckGo', icon: 'fa-solid fa-magnifying-glass' }
-]
+const openModeModel = computed({
+    get: () => store.openMode,
+    set: (v) => store.setOpenMode(v)
+})
+
 const OPEN_MODES = [
     { value: 'current', label: 'In current tab', icon: 'fa-regular fa-window-maximize' },
     { value: 'new', label: 'In new tab', icon: 'fa-solid fa-up-right-from-square' }
@@ -35,7 +29,7 @@ const OPEN_MODES = [
         <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
             <label class="text-sm text-slate-300 block">
                 <span class="block mb-1">Default provider</span>
-                <UiSelect v-model="providerModel" :options="PROVIDERS" aria-label="Default search provider" />
+                <UiSelect v-model="providerModel" :options="PROVIDER_OPTIONS" aria-label="Default search provider" />
             </label>
 
             <label class="text-sm text-slate-300 block">
