@@ -1,9 +1,15 @@
 <script setup>
 import { ref, computed, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import SiIcon from '@/components/ui/SiIcon.vue'
 
+/**
+ * Props:
+ * - options: [{ value, label, icon?, si? }]
+ *   icon: Font Awesome class string (e.g., "fa-brands fa-google")
+ *   si:   Simple Icons slug (e.g., "google")
+ */
 const props = defineProps({
     modelValue: { type: String, default: '' },
-    // Options: [{ value: string, label: string, icon?: string }]
     options: { type: Array, default: () => [] },
     ariaLabel: { type: String, default: '' },
     showIconLeft: { type: Boolean, default: true }
@@ -20,8 +26,9 @@ const selectedIndex = computed(() =>
 )
 const selected = computed(() => props.options[selectedIndex.value] || null)
 const selectedLabel = computed(() => selected.value?.label ?? 'Select…')
-const selectedIcon = computed(() => selected.value?.icon || '')
-const hasIconLeft = computed(() => props.showIconLeft && !!selectedIcon.value)
+const selectedIconClass = computed(() => selected.value?.icon || '')
+const selectedSi = computed(() => selected.value?.si || '')
+const hasIconLeft = computed(() => props.showIconLeft && (!!selectedIconClass.value || !!selectedSi.value))
 
 const idBase = Math.random().toString(36).slice(2, 8)
 const listId = `listbox-${idBase}`
@@ -94,16 +101,18 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
 
 <template>
     <div class="relative">
-        <!-- Trigger: global .control, let left padding be dynamic -->
+        <!-- Trigger: global .control, dynamic left padding if icon present -->
         <button ref="triggerRef" type="button" class="relative w-full control
              flex items-center justify-between
              focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" :class="hasIconLeft ? 'pl-9' : 'pl-3'" :aria-label="ariaLabel || undefined" :aria-haspopup="'listbox'" :aria-expanded="open ? 'true' : 'false'" :aria-controls="listId" @click="toggleDropdown" @keydown="onTriggerKeydown">
-            <i v-if="hasIconLeft" :class="selectedIcon + ' absolute left-3 top-1/2 -translate-y-1/2 opacity-80'" aria-hidden="true" />
+            <!-- Left icon (Simple Icons preferred, FA fallback) -->
+            <SiIcon v-if="hasIconLeft && selectedSi" :name="selectedSi" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-80" aria-hidden="true" />
+            <i v-else-if="hasIconLeft && selectedIconClass" :class="selectedIconClass + ' absolute left-3 top-1/2 -translate-y-1/2 opacity-80 text-sm'" aria-hidden="true" />
             <span class="truncate">{{ selectedLabel }}</span>
             <i class="fa-solid fa-chevron-down opacity-70 ml-3"></i>
         </button>
 
-        <!-- Popup: same look via .control-surface -->
+        <!-- Popup -->
         <div v-show="open" ref="listRef" :id="listId" role="listbox" tabindex="-1" class="absolute left-0 right-0 mt-1 z-50 control-surface
              max-h-60 overflow-auto p-1 shadow-lg" @keydown="onListKeydown">
             <div v-for="(opt, idx) in options" :key="opt.value" :data-idx="idx" role="option" :aria-selected="modelValue === opt.value ? 'true' : 'false'" class="px-3 py-2 rounded text-slate-100 cursor-pointer
@@ -113,7 +122,9 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
                 modelValue === opt.value ? 'ring-1 ring-[#6a737d]' : ''
             ]" @mouseenter="activeIndex = idx" @click="onSelect(idx)">
                 <div class="flex items-center gap-2 min-w-0">
-                    <i v-if="opt.icon" :class="opt.icon + ' text-sm opacity-80'"></i>
+                    <!-- Row icon (Simple Icons preferred, FA fallback) -->
+                    <SiIcon v-if="opt.si" :name="opt.si" class="h-4 w-4 opacity-80" />
+                    <i v-else-if="opt.icon" :class="opt.icon + ' text-sm opacity-80'"></i>
                     <span class="truncate">{{ opt.label }}</span>
                 </div>
                 <i v-if="modelValue === opt.value" class="fa-solid fa-check text-xs text-slate-200" />

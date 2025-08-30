@@ -6,11 +6,12 @@ import { defineStore } from 'pinia'
  * All LocalStorage I/O lives here.
  */
 
+// Provider options now: Simple Icons only (no Font Awesome fallback here)
 export const PROVIDER_OPTIONS = [
-  { value: 'Google',      label: 'Google',      icon: 'fa-brands fa-google' },
-  { value: 'DuckDuckGo',  label: 'DuckDuckGo',  icon: 'fa-solid fa-magnifying-glass' },
-  { value: 'Bing',        label: 'Bing',        icon: 'fa-brands fa-microsoft' },
-  { value: 'Perplexity',  label: 'Perplexity',  icon: 'fa-solid fa-magnifying-glass' }
+  { value: 'Google',      label: 'Google',      si: 'google' },
+  { value: 'DuckDuckGo',  label: 'DuckDuckGo',  si: 'duckduckgo' },
+  { value: 'Bing',        label: 'Bing',        si: 'bing' },
+  { value: 'Perplexity',  label: 'Perplexity',  si: 'perplexity' }
 ]
 const ALLOWED_PROVIDERS = new Set(PROVIDER_OPTIONS.map(o => o.value))
 const STORAGE_KEY = 'shortcuts.settings.v1'

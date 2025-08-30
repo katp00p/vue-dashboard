@@ -1,15 +1,17 @@
-// Central, tree-shaken imports for the few logos you plan to use.
-// Add more imports as needed to avoid pulling 3k+ icons into the bundle.
+// src/icons/simpleIcons.js
+// Use named exports from the aggregator for best Vite compatibility.
+// (Avoid per-file paths like 'simple-icons/icons/google.js')
 
-import siGoogle from 'simple-icons/icons/google.js'
-import siDuckduckgo from 'simple-icons/icons/duckduckgo.js'
-import siBing from 'simple-icons/icons/bing.js'
-import siPerplexity from 'simple-icons/icons/perplexity.js'
-
-// Example extras you might want later (uncomment as needed):
-// import siOpenai from 'simple-icons/icons/openai.js'
-// import siReddit from 'simple-icons/icons/reddit.js'
-// import siGithub from 'simple-icons/icons/github.js'
+import {
+  siGoogle,
+  siDuckduckgo,
+  siBing,
+  siPerplexity,
+  // Add more here as needed:
+  // siOpenaigym as siOpenai, // example of aliasing if slugs differ
+  // siReddit,
+  // siGithub,
+} from 'simple-icons/icons'
 
 export const SI_MAP = {
   google: siGoogle,
