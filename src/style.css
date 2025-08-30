@@ -1,4 +1,5 @@
 @import 'tailwindcss';
+@import 'flowbite';
 
 /* === Global control utilities (uniform site-wide look) === */
 /* Base control: inputs, select triggers, small buttons */

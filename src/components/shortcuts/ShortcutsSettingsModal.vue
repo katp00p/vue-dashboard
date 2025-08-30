@@ -1,9 +1,11 @@
 <script setup>
-import { ref, watch, onMounted, onBeforeUnmount, nextTick } from 'vue'
+import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
+import { FwbToggle } from 'flowbite-vue'
 import SearchSettingsForm from './SearchSettingsForm.vue'
 
-// ...
+/* refs for palette sync */
 const sampleInputRef = ref(null)
+const modalRef = ref(null)
 
 function syncUiSelectPalette() {
     const el = sampleInputRef.value
@@ -16,23 +18,22 @@ function syncUiSelectPalette() {
     root.style.setProperty('--control-border', border)
 }
 
-// when modal opens, sync once after render
 watch(() => open, (v) => {
     if (v) nextTick(syncUiSelectPalette)
 })
 
-const provider = ref('ChatGPT') // controlled by SearchSettingsForm
+/* search settings (top form) */
+const provider = ref('ChatGPT')
 const openMode = ref('current') // 'current' | 'new'
 
 /* v-model:open API */
 const props = defineProps({ open: { type: Boolean, default: false } })
 const emit = defineEmits(['update:open', 'save'])
 
-/* Refs & state */
-const modalRef = ref(null)
+/* modal state */
 const activeIconId = ref('youtube')
 
-/* Mock shortcuts (mirrors your rail, gear excluded) */
+/* mock shortcuts (mirrors your rail, gear excluded) */
 const shortcuts = ref([
     { id: 'youtube', label: 'YouTube', icon: 'fa-brands fa-youtube' },
     { id: 'github', label: 'GitHub', icon: 'fa-brands fa-github' },
@@ -73,8 +74,16 @@ const shortcuts = ref([
     { id: 'weather', label: 'Weather', icon: 'fa-solid fa-cloud-sun' },
     { id: 'calendar', label: 'Calendar', icon: 'fa-regular fa-calendar' },
     { id: 'maps', label: 'Maps', icon: 'fa-solid fa-map' },
-    { id: 'photos', label: 'Photos', icon: 'fa-regular fa-image' }
+    { id: 'photos', label: 'Photos', icon: 'fa-regular fa-image' },
 ])
+
+/* computed: selected icon object */
+const activeIcon = computed(() => {
+    return shortcuts.value.find(s => s.id === activeIconId.value) ?? null
+})
+
+/* toggle state for "Icon Active" (visual only for now) */
+const activeIconActive = ref(true)
 
 /* A11y: focus trap + scroll lock */
 const FOCUSABLE =
@@ -145,6 +154,7 @@ function onSave() {
 }
 </script>
 
+
 <template>
     <Teleport to="body">
         <div v-show="open" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm" role="dialog" aria-modal="true" aria-labelledby="settings-title" id="shortcuts-settings" @click="onOverlayClick">
@@ -179,24 +189,43 @@ function onSave() {
                                 </div>
                             </div>
 
-                            <!-- Right: Icon Settings (mock) -->
-                            <div class="bg-white/5 rounded-md p-4 space-y-3">
-                                <p class="text-xs uppercase text-slate-400">Icon Settings</p>
-                                <div class="space-y-4" v-if="activeIconId">
-                                    <label class="text-sm text-slate-300 block">
-                                        <span class="block mb-1">Label</span>
-                                        <input type="text" :value="shortcuts.find(s => s.id === activeIconId)?.label" class="w-full bg-white/10 rounded-md px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" />
-                                    </label>
+                            <!-- Right: Icon Settings -->
+                            <div class="bg-white/5 rounded-md p-4 space-y-4">
+                                <p class="text-xs uppercase text-slate-400 mb-2">Icon Settings</p>
 
-                                    <label class="text-sm text-slate-300 block">
-                                        <span class="block mb-1">URL</span>
-                                        <input type="text" :value="'https://' + (shortcuts.find(s => s.id === activeIconId)?.label || '').toLowerCase().replaceAll(' ', '') + '.com'" class="w-full bg-white/10 rounded-md px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" />
-                                    </label>
+                                <div v-if="activeIcon" class="space-y-4">
+                                    <!-- === Toggle: Icon Active === -->
+                                    <div>
+                                        <FwbToggle v-model="activeIconActive" label="Icon Active" />
+                                    </div>
 
-                                    <label class="text-sm text-slate-300 block">
-                                        <span class="block mb-1">Icon class</span>
-                                        <input type="text" :value="shortcuts.find(s => s.id === activeIconId)?.icon" class="w-full bg-white/10 rounded-md px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" />
-                                    </label>
+                                    <!-- Label -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Label</label>
+                                        <input v-model="activeIcon.label" type="text" class="control w-full text-sm rounded-md bg-[#4b535a] text-slate-100
+               border border-white/10 focus:outline-none
+               focus:ring-2 focus:ring-sky-400/40 focus:border-white/20" placeholder="e.g., Facebook" autocomplete="off" />
+                                    </div>
+
+                                    <!-- Link -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Link</label>
+                                        <input v-model="activeIcon.href" type="url" class="control w-full text-sm rounded-md bg-[#4b535a] text-slate-100
+               border border-white/10 focus:outline-none
+               focus:ring-2 focus:ring-sky-400/40 focus:border-white/20" placeholder="https://facebook.com" autocomplete="off" />
+                                    </div>
+
+                                    <!-- Icon Class -->
+                                    <div>
+                                        <label class="block text-xs font-medium text-slate-300 mb-1">Icon Class</label>
+                                        <input v-model="activeIcon.icon" type="text" class="control w-full text-sm rounded-md bg-[#4b535a] text-slate-100
+               border border-white/10 focus:outline-none
+               focus:ring-2 focus:ring-sky-400/40 focus:border-white/20" placeholder="fa-brands fa-facebook" autocomplete="off" />
+                                    </div>
+                                </div>
+
+                                <div v-else class="text-sm text-slate-400">
+                                    Select an icon from the left to edit its settings.
                                 </div>
                             </div>
                         </div>
