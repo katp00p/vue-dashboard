@@ -1,7 +1,9 @@
+<!-- src/components/shortcuts/ShortcutsSettingsModal.vue -->
 <script setup>
 import { ref, watch, onMounted, onBeforeUnmount, nextTick, computed } from 'vue'
 import { Switch } from '@headlessui/vue'
 import SearchSettingsForm from './SearchSettingsForm.vue'
+import { useShortcutsStore } from '@/stores/shortcuts'
 
 /* refs for palette sync */
 const sampleInputRef = ref(null)
@@ -19,26 +21,42 @@ function syncUiSelectPalette() {
   root.style.setProperty('--control-border', border)
 }
 
-watch(
-  () => open,
-  (v) => {
-    if (v) nextTick(syncUiSelectPalette)
-  },
-)
-
-/* search settings (top form) */
-const provider = ref('ChatGPT')
-const openMode = ref('current') // 'current' | 'new'
-
 /* v-model:open API */
 const props = defineProps({ open: { type: Boolean, default: false } })
 const emit = defineEmits(['update:open', 'save'])
+
+/* --- Bind search settings directly to Pinia --- */
+const shortcuts = useShortcutsStore()
+shortcuts.hydrate()
+
+// Normalize possible lower-case values from the form to store labels
+const normalizeProvider = (v) => {
+  if (!v) return v
+  const map = {
+    google: 'Google',
+    duckduckgo: 'DuckDuckGo',
+    bing: 'Bing',
+    perplexity: 'Perplexity',
+  }
+  const key = String(v).toLowerCase()
+  return map[key] || v
+}
+
+const provider = computed({
+  get: () => shortcuts.provider,
+  set: (v) => shortcuts.setProvider(normalizeProvider(v)),
+})
+
+const openMode = computed({
+  get: () => shortcuts.openMode,
+  set: (v) => shortcuts.setOpenMode(v),
+})
 
 /* modal state */
 const activeIconId = ref('youtube')
 
 /* mock shortcuts (mirrors your rail, gear excluded) */
-const shortcuts = ref([
+const shortcutsList = ref([
   {
     id: 'youtube',
     label: 'YouTube',
@@ -153,7 +171,7 @@ const shortcuts = ref([
 
 /* computed: selected icon object */
 const activeIcon = computed(() => {
-  return shortcuts.value.find((s) => s.id === activeIconId.value) ?? null
+  return shortcutsList.value.find((s) => s.id === activeIconId.value) ?? null
 })
 
 /* Headless UI switch state (visual only for now) */
@@ -176,6 +194,7 @@ function openEffects() {
   nextTick(() => {
     const [first] = getFocusables()
     if (first && typeof first.focus === 'function') first.focus()
+    syncUiSelectPalette()
   })
 }
 function closeEffects() {
@@ -226,7 +245,19 @@ onBeforeUnmount(() => {
 })
 
 function onSave() {
-  emit('save')
+  // Notify parent first (maintains your existing flow)
+  emit('save', { provider: provider.value, openMode: openMode.value })
+
+  // Authoritative write so our sanitized values win, even if parent writes bad data.
+  shortcuts.setProvider(provider.value)
+  shortcuts.setOpenMode(openMode.value)
+
+  // Backup write on nextTick in case parent defers its write.
+  nextTick(() => {
+    shortcuts.setProvider(provider.value)
+    shortcuts.setOpenMode(openMode.value)
+  })
+
   closeModal()
 }
 </script>
@@ -256,11 +287,11 @@ function onSave() {
 
         <!-- Body -->
         <div class="p-6 space-y-8">
+          <!-- Search settings (binds to Pinia store) -->
           <SearchSettingsForm v-model:provider="provider" v-model:openMode="openMode" />
 
           <!-- Shortcuts Manager -->
           <section class="space-y-3">
-            <!-- Shortcuts Manager header -->
             <h3 class="text-sm font-medium text-slate-200">Shortcuts Manager</h3>
 
             <!-- Instructions row with Add Icon button -->
@@ -286,7 +317,7 @@ function onSave() {
                 <p class="text-xs uppercase text-slate-400 mb-2">Icon Order</p>
                 <div class="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-1">
                   <button
-                    v-for="item in shortcuts"
+                    v-for="item in shortcutsList"
                     :key="item.id"
                     type="button"
                     class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move text-left hover:bg-white/15 focus:outline-none"

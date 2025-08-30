@@ -8,67 +8,89 @@ import { defineStore } from 'pinia'
 
 // Provider options now: Simple Icons only (no Font Awesome fallback here)
 export const PROVIDER_OPTIONS = [
-  { value: 'Google',      label: 'Google',      si: 'google' },
-  { value: 'DuckDuckGo',  label: 'DuckDuckGo',  si: 'duckduckgo' },
-  { value: 'Bing',        label: 'Bing',        si: 'bing' },
-  { value: 'Perplexity',  label: 'Perplexity',  si: 'perplexity' }
+  { value: 'Google', label: 'Google', si: 'google' },
+  { value: 'DuckDuckGo', label: 'DuckDuckGo', si: 'duckduckgo' },
+  { value: 'Bing', label: 'Bing', si: 'bing' },
+  { value: 'Perplexity', label: 'Perplexity', si: 'perplexity' },
 ]
-const ALLOWED_PROVIDERS = new Set(PROVIDER_OPTIONS.map(o => o.value))
+const ALLOWED_PROVIDERS = new Set(PROVIDER_OPTIONS.map((o) => o.value))
 const STORAGE_KEY = 'shortcuts.settings.v1'
 
 const DEFAULTS = {
   provider: 'Google',
-  openMode: 'current' // 'current' | 'new'
+  openMode: 'current', // 'current' | 'new'
+}
+
+// --- helpers ---------------------------------------------------------------
+
+function sanitizeSnapshot(snapshot) {
+  // Make sure we never persist undefined/null/invalid values
+  const provider = ALLOWED_PROVIDERS.has(snapshot?.provider) ? snapshot.provider : DEFAULTS.provider
+
+  const openMode = snapshot?.openMode === 'new' ? 'new' : DEFAULTS.openMode
+
+  return { provider, openMode }
 }
 
 function safeLoad() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (!raw) return { ...DEFAULTS }
-    const data = JSON.parse(raw)
-    const provider = ALLOWED_PROVIDERS.has(data.provider) ? data.provider : DEFAULTS.provider
-    const openMode = data.openMode === 'new' ? 'new' : DEFAULTS.openMode
-    return { provider, openMode }
+
+    const trimmed = String(raw).trim()
+    // Handle legacy or bad writes (e.g., "undefined", "null", empty string)
+    if (!trimmed || trimmed === 'undefined' || trimmed === 'null') {
+      return { ...DEFAULTS }
+    }
+
+    const parsed = JSON.parse(trimmed)
+    return sanitizeSnapshot(parsed)
   } catch {
     return { ...DEFAULTS }
   }
 }
 
-function safeSave(state) {
+function safeSave(stateLike) {
   try {
-    const payload = {
-      provider: state.provider,
-      openMode: state.openMode
-    }
+    const payload = sanitizeSnapshot(stateLike)
     localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
   } catch {
     // ignore write errors (private mode, quota, etc.)
   }
 }
 
+// --- store -----------------------------------------------------------------
+
 export const useShortcutsStore = defineStore('shortcuts', {
   state: () => ({
     ...safeLoad(),
-    _hydrated: false // internal guard so we subscribe once
+    _hydrated: false, // internal guard so we subscribe once
   }),
   actions: {
     hydrate() {
       if (this._hydrated) return
-      // state already initialized from storage in state()
       this._hydrated = true
-      // Persist on any change
+
+      // Immediately normalize whatever is currently in storage.
+      // This fixes cases where other code previously wrote "undefined".
+      safeSave(this.$state ?? this)
+
+      // Persist on any subsequent change
       this.$subscribe((_mutation, state) => {
         safeSave(state)
       })
     },
     setProvider(v) {
       this.provider = ALLOWED_PROVIDERS.has(v) ? v : DEFAULTS.provider
+      safeSave(this.$state ?? this)
     },
     setOpenMode(v) {
       this.openMode = v === 'new' ? 'new' : DEFAULTS.openMode
+      safeSave(this.$state ?? this)
     },
     reset() {
       Object.assign(this, { ...DEFAULTS })
-    }
-  }
+      safeSave(this.$state ?? this)
+    },
+  },
 })
