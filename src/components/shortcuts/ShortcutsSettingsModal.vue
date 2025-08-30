@@ -6,6 +6,7 @@ import SearchSettingsForm from './SearchSettingsForm.vue'
 /* refs for palette sync */
 const sampleInputRef = ref(null)
 const modalRef = ref(null)
+const confirmDelete = ref(false)
 
 function syncUiSelectPalette() {
     const el = sampleInputRef.value
@@ -194,14 +195,13 @@ function onSave() {
                             </div>
 
                             <!-- Right: Icon Settings -->
-                            <div class="bg-white/5 rounded-md p-4 space-y-4">
+                            <div class="bg-white/5 rounded-md p-4 flex flex-col">
                                 <p class="text-xs uppercase text-slate-400 mb-2">Icon Settings</p>
 
-                                <div v-if="activeIcon" class="space-y-4">
-                                    <!-- === Toggle: Icon Active (Headless UI) === -->
+                                <div v-if="activeIcon" class="flex flex-col gap-4 flex-1">
+                                    <!-- Toggle -->
                                     <div class="flex flex-col gap-1">
                                         <span class="block text-xs font-medium text-slate-300">Icon Active</span>
-
                                         <div class="flex items-center gap-3">
                                             <Switch v-model="activeIconActive" :class="[
                                                 activeIconActive ? 'bg-[#2c476d]' : 'bg-gray-600',
@@ -212,7 +212,6 @@ function onSave() {
                                                     'inline-block h-4 w-4 transform rounded-full bg-white transition'
                                                 ]"></span>
                                             </Switch>
-
                                             <span class="text-sm text-slate-100 font-normal">Icon Inactive</span>
                                         </div>
                                     </div>
@@ -221,28 +220,59 @@ function onSave() {
                                     <div>
                                         <label class="block text-xs font-medium text-slate-300 mb-1">Label</label>
                                         <input v-model="activeIcon.label" type="text" class="control w-full text-sm rounded-md bg-[#4b535a] text-slate-100
-                             border border-white/10 focus:outline-none
-                             focus:ring-2 focus:ring-sky-400/40 focus:border-white/20" placeholder="e.g., Facebook" autocomplete="off" />
+               border border-white/10 focus:outline-none
+               focus:ring-2 focus:ring-sky-400/40 focus:border-white/20" placeholder="e.g., Facebook" autocomplete="off" />
                                     </div>
 
                                     <!-- Link -->
                                     <div>
                                         <label class="block text-xs font-medium text-slate-300 mb-1">Link</label>
                                         <input v-model="activeIcon.href" type="url" class="control w-full text-sm rounded-md bg-[#4b535a] text-slate-100
-                             border border-white/10 focus:outline-none
-                             focus:ring-2 focus:ring-sky-400/40 focus:border-white/20" placeholder="https://facebook.com" autocomplete="off" />
+               border border-white/10 focus:outline-none
+               focus:ring-2 focus:ring-sky-400/40 focus:border-white/20" placeholder="https://facebook.com" autocomplete="off" />
                                     </div>
 
                                     <!-- Icon Class -->
                                     <div>
                                         <label class="block text-xs font-medium text-slate-300 mb-1">Icon Class</label>
                                         <input v-model="activeIcon.icon" type="text" class="control w-full text-sm rounded-md bg-[#4b535a] text-slate-100
-                             border border-white/10 focus:outline-none
-                             focus:ring-2 focus:ring-sky-400/40 focus:border-white/20" placeholder="fa-brands fa-facebook" autocomplete="off" />
+               border border-white/10 focus:outline-none
+               focus:ring-2 focus:ring-sky-400/40 focus:border-white/20" placeholder="fa-brands fa-facebook" autocomplete="off" />
+                                    </div>
+
+                                    <!-- Delete Widget pinned bottom -->
+                                    <div class="mt-auto rounded-md border border-white/10 bg-white/5 p-4">
+                                        <p class="text-sm text-slate-200 mb-2">Delete this icon?</p>
+
+                                        <!-- Small text -->
+                                        <p class="text-[13px] text-slate-400">
+                                            {{ confirmDelete ? 'Are you sure?' : 'This will remove the icon from your shortcuts.' }}
+                                        </p>
+
+                                        <!-- Buttons (right-aligned) -->
+                                        <div class="mt-2 flex justify-end gap-2">
+                                            <template v-if="confirmDelete">
+                                                <button type="button" class="px-3 py-2 rounded-md bg-gray-600 text-white hover:bg-gray-700
+                   focus:outline-none focus:ring-2 focus:ring-gray-400/40 text-sm" @click="confirmDelete = false">
+                                                    No
+                                                </button>
+                                                <button type="button" class="px-3 py-2 rounded-md bg-[#553744] text-slate-100
+         border border-white/10 hover:bg-[#6a4756]
+         focus:outline-none focus:ring-2 focus:ring-sky-400/40 text-sm" @click="/* later: real delete */ confirmDelete = false">
+                                                    Yes
+                                                </button>
+                                            </template>
+                                            <template v-else>
+                                                <button type="button" class="px-3 py-2 rounded-md bg-[#553744] text-slate-100 border border-white/10
+                   hover:bg-[#6a4756] focus:outline-none focus:ring-2 focus:ring-sky-400/40 text-sm" @click="confirmDelete = true">
+                                                    Delete
+                                                </button>
+                                            </template>
+                                        </div>
                                     </div>
                                 </div>
 
-                                <div v-else class="text-sm text-slate-400">
+                                <div v-else class="text-sm text-slate-400 flex-1 flex items-center justify-center">
                                     Select an icon from the left to edit its settings.
                                 </div>
                             </div>
