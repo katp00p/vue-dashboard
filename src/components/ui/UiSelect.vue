@@ -101,13 +101,16 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
 
 <template>
     <div class="relative">
-        <!-- Trigger: global .control, dynamic left padding if icon present -->
+        <!-- Trigger -->
         <button ref="triggerRef" type="button" class="relative w-full control
              flex items-center justify-between
              focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" :class="hasIconLeft ? 'pl-9' : 'pl-3'" :aria-label="ariaLabel || undefined" :aria-haspopup="'listbox'" :aria-expanded="open ? 'true' : 'false'" :aria-controls="listId" @click="toggleDropdown" @keydown="onTriggerKeydown">
-            <!-- Left icon (Simple Icons preferred, FA fallback) -->
-            <SiIcon v-if="hasIconLeft && selectedSi" :name="selectedSi" class="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 opacity-80" aria-hidden="true" />
-            <i v-else-if="hasIconLeft && selectedIconClass" :class="selectedIconClass + ' absolute left-3 top-1/2 -translate-y-1/2 opacity-80 text-sm'" aria-hidden="true" />
+            <!-- Fixed-size icon cell so icons & text align across rows -->
+            <span v-if="hasIconLeft" class="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 flex items-center justify-center opacity-80" aria-hidden="true">
+                <SiIcon v-if="selectedSi" :name="selectedSi" class="h-4 w-4" />
+                <i v-else-if="selectedIconClass" :class="selectedIconClass + ' text-[16px] leading-none fa-fw'" />
+            </span>
+
             <span class="truncate">{{ selectedLabel }}</span>
             <i class="fa-solid fa-chevron-down opacity-70 ml-3"></i>
         </button>
@@ -122,9 +125,11 @@ onBeforeUnmount(() => document.removeEventListener('mousedown', onDocClick))
                 modelValue === opt.value ? 'ring-1 ring-[#6a737d]' : ''
             ]" @mouseenter="activeIndex = idx" @click="onSelect(idx)">
                 <div class="flex items-center gap-2 min-w-0">
-                    <!-- Row icon (Simple Icons preferred, FA fallback) -->
-                    <SiIcon v-if="opt.si" :name="opt.si" class="h-4 w-4 opacity-80" />
-                    <i v-else-if="opt.icon" :class="opt.icon + ' text-sm opacity-80'"></i>
+                    <!-- Same fixed-size icon cell for rows -->
+                    <span class="h-5 w-5 flex items-center justify-center flex-shrink-0 opacity-80">
+                        <SiIcon v-if="opt.si" :name="opt.si" class="h-4 w-4" />
+                        <i v-else-if="opt.icon" :class="opt.icon + ' text-[16px] leading-none fa-fw'"></i>
+                    </span>
                     <span class="truncate">{{ opt.label }}</span>
                 </div>
                 <i v-if="modelValue === opt.value" class="fa-solid fa-check text-xs text-slate-200" />

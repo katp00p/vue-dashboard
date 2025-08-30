@@ -1,7 +1,8 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import ShortcutsSettingsModal from './shortcuts/ShortcutsSettingsModal.vue'
-import { useShortcutsStore } from '@/stores/shortcuts'
+import { useShortcutsStore, PROVIDER_OPTIONS } from '@/stores/shortcuts'
+import SiIcon from '@/components/ui/SiIcon.vue'
 
 const store = useShortcutsStore()
 onMounted(() => store.hydrate())
@@ -20,6 +21,11 @@ function urlFor(provider, query) {
         default: return `https://www.google.com/search?q=${enc(query)}`
     }
 }
+
+// map provider value -> simple-icons name from your store options
+const siMap = Object.fromEntries(PROVIDER_OPTIONS.map(o => [o.value, o.si]))
+const isBing = computed(() => store.provider === 'Bing')
+const siName = computed(() => siMap[store.provider] ?? null)
 
 async function onSubmit() {
     const text = q.value.trim()
@@ -40,7 +46,8 @@ async function onSubmit() {
     <section class="mb-4 shrink-0" id="shortcuts">
         <div class="glass rounded-md px-4 py-3 flex items-center gap-4 overflow-hidden">
             <!-- Rail -->
-            <div class="shortcuts-rail flex items-center gap-3 flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain h-12 [&>a]:inline-flex [&>a]:items-center [&>a]:justify-center [&>a]:leading-none [&>a]:h-12 [&>a>i]:block [&>a>i]:leading-none">
+            <div class="shortcuts-rail flex items-center gap-3 flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain h-12
+               [&>a]:inline-flex [&>a]:items-center [&>a]:justify-center [&>a]:leading-none [&>a]:h-12 [&>a>i]:block [&>a>i]:leading-none">
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://www.youtube.com" title="YouTube"><i class="fa-brands fa-youtube"></i></a>
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://github.com" title="GitHub"><i class="fa-brands fa-github"></i></a>
                 <a class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition" href="https://mail.google.com" title="Gmail"><i class="fa-regular fa-envelope"></i></a>
@@ -93,7 +100,13 @@ async function onSubmit() {
             <!-- Right: Unified Search -->
             <form class="hidden md:flex items-center gap-2" @submit.prevent="onSubmit">
                 <div class="relative">
-                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 opacity-70"></i>
+                    <!-- Provider icon (replaces magnifying glass) -->
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 opacity-90 text-slate-200 w-5 h-5 flex items-center justify-center">
+                        <!-- Use Simple Icons for Google/DDG/Perplexity; fallback to FA Bing if SI 'bing' is not in your registry -->
+                        <SiIcon v-if="!isBing && siName" :name="siName" class="w-5 h-5" aria-hidden="true" />
+                        <i v-else class="fa-brands fa-bing text-lg leading-none" aria-hidden="true"></i>
+                    </span>
+
                     <input v-model="q" class="pl-10 pr-3 py-2 bg-white/10 rounded-md outline-none focus:ring-2 focus:ring-[var(--ring)] text-slate-100 placeholder:[color:var(--hint)] w-[400px]" placeholder="Search…" type="search" autocomplete="off" />
                 </div>
 
@@ -114,6 +127,30 @@ async function onSubmit() {
 }
 
 .shortcuts-rail::-webkit-scrollbar {
+    width: 0;
+    height: 0;
+}
+
+:deep(input[type="search"]::-webkit-search-cancel-button) {
+    -webkit-appearance: none;
+    height: 1.1em;
+    width: 1.1em;
+    cursor: pointer;
+    opacity: 0.8;
+
+    background: transparent;
+    background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' stroke='%23949ba1' stroke-width='2' fill='none' stroke-linecap='round' stroke-linejoin='round'><line x1='6' y1='6' x2='18' y2='18'/><line x1='6' y1='18' x2='18' y2='6'/></svg>");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 100% 100%;
+}
+
+:deep(input[type="search"]::-webkit-search-cancel-button:hover) {
+    opacity: 1;
+}
+
+:deep(input[type="search"]::-ms-clear) {
+    display: none;
     width: 0;
     height: 0;
 }

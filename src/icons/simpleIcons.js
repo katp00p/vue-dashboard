@@ -1,26 +1,17 @@
 // src/icons/simpleIcons.js
-// Use named exports from the aggregator for best Vite compatibility.
-// (Avoid per-file paths like 'simple-icons/icons/google.js')
+// One place to grab Simple Icons. No Bing here (removed upstream).
+// Uses a root namespace import so it works across package versions.
 
-import {
-  siGoogle,
-  siDuckduckgo,
-  siBing,
-  siPerplexity,
-  // Add more here as needed:
-  // siOpenaigym as siOpenai, // example of aliasing if slugs differ
-  // siReddit,
-  // siGithub,
-} from 'simple-icons/icons'
+import * as SI from 'simple-icons'
+
+// Only import icons that actually exist in your installed version:
+const { siGoogle, siDuckduckgo, siPerplexity } = SI
 
 export const SI_MAP = {
   google: siGoogle,
   duckduckgo: siDuckduckgo,
-  bing: siBing,
   perplexity: siPerplexity,
-  // openai: siOpenai,
-  // reddit: siReddit,
-  // github: siGithub,
+  // NOTE: No 'bing' here — we use Font Awesome for Bing in the provider list.
 }
 
 export function getSimpleIcon(slug) {
