@@ -172,7 +172,7 @@ function onSave() {
                             <div class="bg-white/5 rounded-md p-4 space-y-2">
                                 <p class="text-xs uppercase text-slate-400 mb-2">Icon Order</p>
                                 <div class="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-1">
-                                    <button v-for="item in shortcuts" :key="item.id" type="button" class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move text-left hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[var(--ring)]" :class="activeIconId === item.id ? 'ring-2 ring-[var(--ring)]' : ''" @click="activeIconId = item.id">
+                                    <button v-for="item in shortcuts" :key="item.id" type="button" class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move text-left hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-[#949ba1]" :class="activeIconId === item.id ? 'ring-2 ring-[#949ba1]' : ''" @click="activeIconId = item.id">
                                         <i :class="item.icon + ' text-xl'"></i>
                                         <span class="text-slate-200 text-sm">{{ item.label }}</span>
                                     </button>
