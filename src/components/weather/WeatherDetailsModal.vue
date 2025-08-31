@@ -17,7 +17,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   current: { type: Object, default: null },
   daily: { type: Array, default: () => [] },
-  next48: { type: Array, default: () => [] }, // includes ws, wg, wd
+  next48: { type: Array, default: () => [] }, // time,temp,feels,pprob,pamt,ws,wg,wd,rh,isDay
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -133,20 +133,20 @@ const week2 = computed(() => props.daily.slice(7, 14))
               <section class="mb-6">
                 <p class="text-slate-400 text-[10px] uppercase tracking-wide mb-2">Next 48 hours</p>
                 <div class="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
-                  <!-- header -->
+                  <!-- header (add pr to match scrollbar width) -->
                   <div
-                    class="flex items-center px-3 py-1 text-[11px] text-slate-400 bg-white/5 leading-3 whitespace-nowrap"
+                    class="flex items-center px-3 pr-[20px] py-1 text-[11px] text-slate-400 bg-white/5 leading-3 whitespace-nowrap"
                   >
                     <div class="w-[64px]">Time</div>
                     <div class="w-[20px] text-center">⛅</div>
                     <div class="flex-1">Desc</div>
-                    <div class="w-[56px] text-right">Temp</div>
-                    <div class="w-[56px] text-right">Feels</div>
-                    <div class="w-[48px] text-right">💧%</div>
-                    <div class="w-[44px] text-right">mm</div>
-                    <div class="w-[128px] text-right">Wind</div>
-                    <!-- speed/gust + dir -->
-                    <div class="w-[44px] text-right">RH%</div>
+                    <div class="w-[56px] text-center">Temp</div>
+                    <div class="w-[56px] text-center">Feels</div>
+                    <div class="w-[48px] text-center">💧%</div>
+                    <div class="w-[44px] text-center">mm</div>
+                    <!-- 🔁 swapped order: RH% before Wind -->
+                    <div class="w-[44px] text-center">RH%</div>
+                    <div class="w-[128px] text-center">Wind</div>
                   </div>
 
                   <!-- rows -->
@@ -155,7 +155,7 @@ const week2 = computed(() => props.daily.slice(7, 14))
                       v-for="h in next48"
                       :key="h.time"
                       class="flex items-center px-3 py-2 text-sm leading-4 whitespace-nowrap tabular-nums"
-                      :aria-label="`${fmtTime(h.time)}: ${codeToText(h.code)}, ${Math.round(h.temp ?? 0)}°C, feels ${Math.round(h.feels ?? 0)}°C, precip ${h.pprob ?? 0}%, amount ${(h.pamt ?? 0).toFixed(1)} mm, wind ${Math.round(h.ws ?? 0)} km/h gust ${Math.round(h.wg ?? 0)} km/h from ${h.wd != null ? degToCompass(h.wd) : '—'}, RH ${Math.round(h.rh ?? 0)}%`"
+                      :aria-label="`${fmtTime(h.time)}: ${codeToText(h.code)}, ${Math.round(h.temp ?? 0)}°C, feels ${Math.round(h.feels ?? 0)}°C, precip ${h.pprob ?? 0}%, amount ${(h.pamt ?? 0).toFixed(1)} mm, RH ${Math.round(h.rh ?? 0)}%, wind ${Math.round(h.ws ?? 0)} km/h gust ${Math.round(h.wg ?? 0)} km/h from ${h.wd != null ? degToCompass(h.wd) : '—'}`"
                     >
                       <div class="w-[64px] text-slate-300">{{ fmtTime(h.time) }}</div>
                       <div class="w-[20px] text-center">
@@ -168,23 +168,32 @@ const week2 = computed(() => props.daily.slice(7, 14))
                       <div class="flex-1 overflow-hidden text-ellipsis text-slate-400">
                         {{ codeToText(h.code) }}
                       </div>
-                      <div class="w-[56px] text-right text-slate-100 font-semibold">
+
+                      <!-- centered numeric cells -->
+                      <div class="w-[56px] flex justify-center text-slate-100 font-semibold">
                         {{ h.temp != null ? Math.round(h.temp) : '—' }}°
                       </div>
-                      <div class="w-[56px] text-right text-slate-300">
+                      <div class="w-[56px] flex justify-center text-slate-300">
                         {{ h.feels != null ? Math.round(h.feels) : '—' }}°
                       </div>
-                      <div class="w-[48px] text-right text-slate-300">{{ h.pprob ?? 0 }}%</div>
-                      <div class="w-[44px] text-right text-slate-300">
+                      <div class="w-[48px] flex justify-center text-slate-300">
+                        {{ h.pprob ?? 0 }}%
+                      </div>
+                      <div class="w-[44px] flex justify-center text-slate-300">
                         {{ h.pamt != null ? h.pamt.toFixed(1) : '—' }}
                       </div>
 
-                      <!-- ✅ Wind: speed/gust + direction -->
-                      <div class="w-[128px] text-right text-slate-300">
+                      <!-- 🔁 RH% before Wind -->
+                      <div class="w-[44px] flex justify-center text-slate-300">
+                        {{ h.rh != null ? Math.round(h.rh) : '—' }}
+                      </div>
+
+                      <!-- Wind last -->
+                      <div class="w-[128px] flex justify-center text-slate-300">
                         <span class="text-slate-100">{{
                           h.ws != null ? Math.round(h.ws) : '—'
                         }}</span>
-                        <span class="text-slate-500">/</span>
+                        <span class="text-slate-500 mx-0.5">/</span>
                         <span>{{ h.wg != null ? Math.round(h.wg) : '—' }}</span>
                         <span v-if="h.wd != null" class="ml-1">
                           {{ degToCompass(h.wd) }}
@@ -192,10 +201,6 @@ const week2 = computed(() => props.daily.slice(7, 14))
                             {{ degToArrow(h.wd) }}</span
                           >
                         </span>
-                      </div>
-
-                      <div class="w-[44px] text-right text-slate-300">
-                        {{ h.rh != null ? Math.round(h.rh) : '—' }}
                       </div>
                     </div>
                   </div>
