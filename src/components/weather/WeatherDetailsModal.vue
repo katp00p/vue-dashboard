@@ -37,6 +37,7 @@ const week2 = computed(() => props.daily.slice(7, 14))
 <template>
   <TransitionRoot as="template" :show="modelValue">
     <Dialog as="div" class="relative z-50" @close="close">
+      <!-- Overlay -->
       <TransitionChild
         as="template"
         enter="ease-out duration-200"
@@ -49,6 +50,7 @@ const week2 = computed(() => props.daily.slice(7, 14))
         <div class="fixed inset-0 bg-black/60" />
       </TransitionChild>
 
+      <!-- Panel -->
       <div class="fixed inset-0 overflow-y-auto" id="weather-details-modal">
         <div class="flex min-h-full items-center justify-center p-4">
           <TransitionChild
@@ -129,16 +131,19 @@ const week2 = computed(() => props.daily.slice(7, 14))
               <section class="mb-6">
                 <p class="text-slate-400 text-[10px] uppercase tracking-wide mb-2">Next 24 hours</p>
                 <div class="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
+                  <!-- header -->
                   <div
                     class="flex items-center px-3 py-1 text-[11px] text-slate-400 bg-white/5 leading-3 whitespace-nowrap"
                   >
                     <div class="w-[64px]">Time</div>
                     <div class="w-[20px] text-center">⛅</div>
-                    <div class="flex-1"></div>
+                    <div class="flex-1">Desc</div>
                     <div class="w-[56px] text-right">Temp</div>
                     <div class="w-[56px] text-right">Feels</div>
                     <div class="w-[48px] text-right">💧%</div>
                   </div>
+
+                  <!-- rows -->
                   <div class="max-h-48 overflow-y-auto divide-y divide-white/10">
                     <div
                       v-for="h in next24"
@@ -154,7 +159,9 @@ const week2 = computed(() => props.daily.slice(7, 14))
                           aria-hidden="true"
                         ></i>
                       </div>
-                      <div class="flex-1 overflow-hidden text-ellipsis text-slate-400"></div>
+                      <div class="flex-1 overflow-hidden text-ellipsis text-slate-400">
+                        {{ codeToText(h.code) }}
+                      </div>
                       <div class="w-[56px] text-right text-slate-100 font-semibold">
                         {{ h.temp != null ? Math.round(h.temp) : '—' }}°
                       </div>
@@ -170,6 +177,8 @@ const week2 = computed(() => props.daily.slice(7, 14))
               <!-- TWO-WEEK -->
               <section>
                 <p class="text-slate-400 text-xs uppercase tracking-wide mb-2">Two-week outlook</p>
+
+                <!-- Week 1 -->
                 <div class="grid grid-cols-7 gap-3 mb-3">
                   <div
                     v-for="d in week1"
@@ -189,6 +198,8 @@ const week2 = computed(() => props.daily.slice(7, 14))
                     </p>
                   </div>
                 </div>
+
+                <!-- Week 2 -->
                 <div class="grid grid-cols-7 gap-3">
                   <div
                     v-for="d in week2"
