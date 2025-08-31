@@ -8,6 +8,7 @@ import { codeToText, codeToIcon, fmtDay, round } from '../utils/weatherUtils'
 const LAT = 43.764315
 const LON = -79.199
 
+// Modal state
 const isOpen = ref(false)
 function openModal() {
   isOpen.value = true
@@ -19,12 +20,15 @@ function onKeyActivate(e) {
   }
 }
 
+// Reactive state
 const loading = ref(true)
 const error = ref('')
-const current = ref(null)
-const daily = ref([])
-const next48 = ref([])
+const current = ref(null) // { temp, code, isDay, windspeed, winddirection, time }
+const daily = ref([]) // 14 days
+const next48 = ref([]) // next 48 hours list
+const lastUpdated = ref(null) // timestamp of last successful fetch
 
+// Derived (widget header)
 const currentText = computed(() => (current.value ? codeToText(current.value.code) : '—'))
 const currentIcon = computed(() =>
   current.value ? codeToIcon(current.value.code, current.value.isDay) : 'fa-solid fa-cloud',
@@ -33,6 +37,7 @@ const currentTemp = computed(() => (current.value ? `${round(current.value.temp)
 const todayHi = computed(() => (daily.value.length ? `${round(daily.value[0].tMax)}°` : '—'))
 const todayLo = computed(() => (daily.value.length ? `${round(daily.value[0].tMin)}°` : '—'))
 
+// Fetch (loop-proof)
 let fetching = false
 async function fetchWeather() {
   if (fetching) return
@@ -45,6 +50,7 @@ async function fetchWeather() {
         latitude: LAT,
         longitude: LON,
         current_weather: true,
+        // prefer a model with good coverage for pressure/visibility
         models: 'gfs_seamless',
         daily: [
           'temperature_2m_max',
@@ -60,6 +66,7 @@ async function fetchWeather() {
           'uv_index_max',
           'weathercode',
         ].join(','),
+        // Hourly variables (includes extra fields used in "Now")
         hourly: [
           'temperature_2m',
           'apparent_temperature',
@@ -83,6 +90,7 @@ async function fetchWeather() {
       timeout: 12000,
     })
 
+    // current
     if (data?.current_weather) {
       const { temperature, weathercode, is_day, windspeed, winddirection, time } =
         data.current_weather
@@ -98,6 +106,7 @@ async function fetchWeather() {
       current.value = null
     }
 
+    // daily (14 days)
     const d = data?.daily || {}
     const days = []
     const len = (d.time || []).length
@@ -120,9 +129,11 @@ async function fetchWeather() {
     }
     daily.value = days
 
+    // hourly → next 48 hours list
     const h = data?.hourly || {}
     next48.value = []
     if (h.time?.length) {
+      // align to current hour
       let idx = 0
       if (current.value?.time) {
         const curHour = current.value.time.slice(0, 13)
@@ -144,12 +155,16 @@ async function fetchWeather() {
           wd: h.winddirection_10m?.[i],
           rh: h.relative_humidity_2m?.[i],
           uv: h.uv_index?.[i],
+          // extras
           press: h.pressure_msl?.[i] ?? h.surface_pressure?.[i], // hPa
           vis: h.visibility?.[i], // meters
           snow: h.snow_depth?.[i], // meters
         })
       }
     }
+
+    // mark successful update time
+    lastUpdated.value = Date.now()
   } catch (e) {
     error.value = 'Unable to load weather right now.'
     console.error('Weather fetch failed:', e?.response?.data || e?.message || e)
@@ -163,6 +178,7 @@ onMounted(fetchWeather)
 </script>
 
 <template>
+  <!-- WEATHER (clickable to open modal) -->
   <section
     class="glass rounded-md shadow-card p-5 w-full overflow-hidden cursor-pointer hover:ring-1 ring-accent/40 transition"
     id="widget-weather"
@@ -174,15 +190,19 @@ onMounted(fetchWeather)
     @click="openModal"
     @keydown="onKeyActivate"
   >
+    <!-- Spinner -->
     <div v-if="loading" class="flex items-center justify-center h-40">
       <VueSpinnerOval size="48" color="#38bdf8" />
     </div>
 
+    <!-- Error -->
     <div v-else-if="error" class="text-center text-red-400 py-10">
       {{ error }}
     </div>
 
+    <!-- Content -->
     <template v-else>
+      <!-- Header / Current -->
       <div class="flex items-center justify-between mb-4">
         <div>
           <h2 id="weather-title" class="card-title text-slate-100 font-semibold tracking-wide">
@@ -199,6 +219,7 @@ onMounted(fetchWeather)
         </div>
       </div>
 
+      <!-- 7-Day Forecast (compact) -->
       <div class="grid grid-cols-7 gap-3 text-center text-slate-300 text-sm mt-3" role="list">
         <div
           v-for="d in daily.slice(0, 7)"
@@ -215,13 +236,21 @@ onMounted(fetchWeather)
     </template>
   </section>
 
-  <WeatherDetailsModal v-model="isOpen" :current="current" :daily="daily" :next48="next48" />
+  <!-- Details Modal -->
+  <WeatherDetailsModal
+    v-model="isOpen"
+    :current="current"
+    :daily="daily"
+    :next48="next48"
+    :last-updated="lastUpdated"
+  />
 </template>
 
 <style scoped>
 #widget-weather .card-title {
   letter-spacing: 0.02em;
 }
+/* Lighter scrollbars on dark */
 ::-webkit-scrollbar {
   height: 6px;
   width: 8px;

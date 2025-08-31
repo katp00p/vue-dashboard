@@ -17,7 +17,8 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   current: { type: Object, default: null },
   daily: { type: Array, default: () => [] },
-  next48: { type: Array, default: () => [] }, // includes press(hPa), vis(m), snow(m)
+  next48: { type: Array, default: () => [] }, // includes press/vis/snow
+  lastUpdated: { type: [Number, String, Date], default: null },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -35,7 +36,7 @@ const todayLo = computed(() => (props.daily.length ? `${round(props.daily[0].tMi
 const week1 = computed(() => props.daily.slice(0, 7))
 const week2 = computed(() => props.daily.slice(7, 14))
 
-// Use first hour in next48 as "now" detail source (aligned to current hour)
+// Use first hour in next48 as "now" detail source
 const nowHour = computed(() => (props.next48 && props.next48.length ? props.next48[0] : null))
 
 // Sunrise/Sunset/Day length
@@ -86,16 +87,23 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
             class="w-full max-w-5xl"
           >
             <DialogPanel class="glass rounded-2xl shadow-xl p-6 focus:outline-none">
-              <div class="flex items-start justify-between mb-5">
-                <h3 class="text-lg font-semibold text-slate-100">Weather details</h3>
-                <button
-                  type="button"
-                  @click="close"
-                  class="text-slate-300 hover:text-slate-100 transition"
-                  aria-label="Close"
-                >
-                  <i class="fa-solid fa-xmark text-xl"></i>
-                </button>
+              <!-- Header -->
+              <div class="mb-3">
+                <div class="flex items-start justify-between">
+                  <h3 class="text-lg font-semibold text-slate-100">Weather details</h3>
+                  <button
+                    type="button"
+                    @click="close"
+                    class="text-slate-300 hover:text-slate-100 transition"
+                    aria-label="Close"
+                  >
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                  </button>
+                </div>
+                <!-- Updated time -->
+                <div>
+                  <UpdatedAgo :at="lastUpdated" />
+                </div>
               </div>
 
               <!-- NOW (expanded) -->
@@ -139,9 +147,9 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
                     <span class="text-slate-500">/</span>
                     <span>{{ nowHour?.wg != null ? Math.round(nowHour.wg) : '—' }}</span>
                     <span v-if="nowHour?.wd != null" class="ml-1">
-                      {{ nowHour?.wd != null ? degToCompass(nowHour.wd) : '' }}
+                      {{ degToCompass(nowHour.wd) }}
                       <span aria-hidden="true" class="text-slate-500">
-                        {{ nowHour?.wd != null ? degToArrow(nowHour.wd) : '' }}</span
+                        {{ degToArrow(nowHour.wd) }}</span
                       >
                     </span>
                     <span class="text-slate-400"> km/h</span>
@@ -173,7 +181,7 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
                     </span>
                   </div>
 
-                  <!-- ➕ NEW: Pressure -->
+                  <!-- New: Pressure / Visibility / Snow cover -->
                   <div class="text-slate-300">
                     Pressure (MSL)<br />
                     <span class="text-slate-100 font-semibold">
@@ -181,7 +189,6 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
                     </span>
                   </div>
 
-                  <!-- ➕ NEW: Visibility -->
                   <div class="text-slate-300">
                     Visibility<br />
                     <span class="text-slate-100 font-semibold">
@@ -189,7 +196,6 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
                     </span>
                   </div>
 
-                  <!-- ➕ NEW: Snow cover (depth) -->
                   <div class="text-slate-300">
                     Snow cover<br />
                     <span class="text-slate-100 font-semibold">
@@ -218,7 +224,7 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
                 </div>
               </section>
 
-              <!-- HOURLY (unchanged) -->
+              <!-- Next 48 hours (unchanged) -->
               <section class="mb-6">
                 <p class="text-slate-400 text-[10px] uppercase tracking-wide mb-2">Next 48 hours</p>
 
@@ -295,7 +301,7 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
                 </div>
               </section>
 
-              <!-- TWO-WEEK (unchanged) -->
+              <!-- Two-week (unchanged) -->
               <section>
                 <p class="text-slate-400 text-xs uppercase tracking-wide mb-2">Two-week outlook</p>
 

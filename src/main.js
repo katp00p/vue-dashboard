@@ -9,6 +9,8 @@ import router from './router'
 
 import { useShortcutsStore } from '@/stores/shortcuts'
 
+import UpdatedAgo from './components/common/UpdatedAgo.vue'
+
 const app = createApp(App)
 const pinia = createPinia()
 app.use(pinia)
@@ -19,5 +21,7 @@ shortcuts.hydrate()
 shortcuts.$subscribe((_mutation, state) => {
   localStorage.setItem('shortcuts.settings.v1', JSON.stringify(state.settings))
 })
+
+app.component('UpdatedAgo', UpdatedAgo)
 
 app.mount('#app')
