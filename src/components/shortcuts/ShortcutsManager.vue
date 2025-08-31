@@ -6,8 +6,13 @@ import { useShortcutsStore } from '@/stores/shortcuts'
 const store = useShortcutsStore()
 store.hydrate()
 
+/* Config */
+const MAX_SHORTCUTS = 39
+
 /* List from store (single source of truth) */
 const list = computed(() => (Array.isArray(store.shortcuts) ? store.shortcuts : []))
+const count = computed(() => list.value.length)
+const canAdd = computed(() => count.value < MAX_SHORTCUTS)
 
 /* Selection */
 const activeId = ref(list.value[0]?.id ?? null)
@@ -26,7 +31,6 @@ function faviconSrc(href) {
 
 /* ---- HTML5 Drag & Drop (no deps) ---- */
 let dragIndex = -1
-
 function onDragStart(e, idx) {
   dragIndex = idx
   try {
@@ -60,19 +64,33 @@ function onDragEnd() {
 function removeItem(id) {
   store.deleteShortcut(id) // persists via store subscription
   if (activeId.value === id) {
-    // pick a sensible next selection
     const first = list.value[0]
     activeId.value = first ? first.id : null
   }
 }
 
+/* ---------- Add Icon ---------- */
+function uniqueId(base = 'item') {
+  const seed = (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)).toLowerCase()
+  let id = `${base}${seed}`
+  const has = (x) => list.value.some((s) => s.id === x)
+  while (has(id)) id = `${base}${seed}${Math.random().toString(36).slice(2, 4)}`
+  return id
+}
+function addItem() {
+  if (!canAdd.value) return
+  const id = uniqueId()
+  store.upsertShortcut({
+    id,
+    label: 'New Shortcut',
+    href: '',
+    icon: '',
+  })
+  activeId.value = id
+}
+
 /* ---------- Editable form (debounced save) ---------- */
-const form = reactive({
-  id: '',
-  label: '',
-  href: '',
-  icon: '',
-})
+const form = reactive({ id: '', label: '', href: '', icon: '' })
 
 function loadFormFromActive() {
   const s = activeItem.value
@@ -86,15 +104,13 @@ function loadFormFromActive() {
 watch(activeId, loadFormFromActive, { immediate: true })
 
 /* If list changes (add/remove/reorder), keep selection sane */
-watch(list, (nv, ov) => {
+watch(list, (nv) => {
   if (!nv?.length) {
     activeId.value = null
     loadFormFromActive()
     return
   }
-  if (!nv.find((s) => s.id === activeId.value)) {
-    activeId.value = nv[0].id
-  }
+  if (!nv.find((s) => s.id === activeId.value)) activeId.value = nv[0].id
   loadFormFromActive()
 })
 
@@ -117,20 +133,21 @@ function applyChanges() {
 
 <template>
   <section class="space-y-3">
-    <h3 class="text-sm font-medium text-slate-200">Shortcuts Manager</h3>
-
     <div class="flex items-center justify-between">
-      <p class="text-sm text-slate-400">
-        Drag to reorder. Click an item to edit its details. Changes save automatically.
-      </p>
-      <button
-        type="button"
-        disabled
-        class="px-3 py-2 rounded-md bg-white/10 text-slate-100 border border-white/15 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-sky-400/40 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-        title="Add Icon (coming soon)"
-      >
-        Add Icon
-      </button>
+      <h3 class="text-sm font-medium text-slate-200">Shortcuts Manager</h3>
+
+      <div class="flex items-center gap-3">
+        <span class="text-xs text-slate-400">{{ count }} / {{ MAX_SHORTCUTS }}</span>
+        <button
+          type="button"
+          :disabled="!canAdd"
+          class="px-3 py-2 rounded-md bg-white/10 text-slate-100 border border-white/15 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-sky-400/40 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          :title="canAdd ? 'Add a new icon' : 'Maximum of 39 icons reached'"
+          @click="addItem"
+        >
+          Add Icon
+        </button>
+      </div>
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -178,7 +195,7 @@ function applyChanges() {
         </div>
 
         <div v-else class="text-sm text-slate-400 flex items-center justify-center h-24">
-          No shortcuts yet. Add your first icon (coming soon).
+          No shortcuts yet. Click “Add Icon” to create one.
         </div>
       </div>
 
@@ -241,8 +258,8 @@ function applyChanges() {
               @input="scheduleSave"
             />
             <p class="text-xs text-slate-400 mt-1">
-              Tip: paste any Font Awesome class string (e.g., <code>fa-solid fa-robot</code>). If
-              blank, we’ll try the site favicon from the link.
+              Tip: paste any Font Awesome class (e.g., <code>fa-solid fa-robot</code>). If left
+              blank, we’ll show the site favicon from the link (when available).
             </p>
           </div>
         </div>

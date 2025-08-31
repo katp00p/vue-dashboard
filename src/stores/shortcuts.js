@@ -58,7 +58,7 @@ function normalizeShortcuts(input) {
 }
 
 function isCorruptedRaw(raw) {
-  if (raw == null) return false // missing is handled separately
+  if (raw == null) return false // missing handled elsewhere
   const t = String(raw).trim()
   if (t === 'undefined' || t === 'null' || t === '') return true
   return !/^[{\[]/.test(t) // must look like JSON
@@ -68,7 +68,6 @@ function safeLoad() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
     if (isCorruptedRaw(raw)) {
-      // self-heal by clearing; hydrate() will re-save a clean state
       localStorage.removeItem(STORAGE_KEY)
       return { ...DEFAULTS }
     }
@@ -106,7 +105,6 @@ function safeSave(state) {
       openMode: state.openMode === 'new' ? 'new' : DEFAULTS.openMode,
       shortcuts: normalizeShortcuts(state.shortcuts),
     }
-    // Never write the literal "undefined"
     let json = ''
     try {
       json = JSON.stringify(payload) || ''
@@ -137,7 +135,7 @@ export const useShortcutsStore = defineStore('shortcuts', {
       if (this._hydrated) return
       this._hydrated = true
 
-      // Ensure the key exists (or gets repaired) immediately on hydrate
+      // Ensure the key exists/repairs immediately on hydrate
       try {
         const raw = localStorage.getItem(STORAGE_KEY)
         const missing = raw === null
@@ -148,23 +146,42 @@ export const useShortcutsStore = defineStore('shortcuts', {
         }
       } catch {}
 
-      // Persist every subsequent change
-      this.$subscribe((_mutation, state) => {
-        safeSave(state)
-      })
+      // Detached subscription so it survives modal unmounts
+      this.$subscribe(
+        (_mutation, state) => {
+          safeSave(state)
+        },
+        { detached: true },
+      )
+    },
+
+    /* Persist immediately and again next tick so we "win" over any stray writer */
+    _forcePersistSoon() {
+      try {
+        safeSave(this.$state)
+      } catch {}
+      try {
+        Promise.resolve().then(() => safeSave(this.$state))
+      } catch {}
+      try {
+        setTimeout(() => safeSave(this.$state), 0)
+      } catch {}
     },
 
     // Search settings
     setProvider(v) {
       this.provider = ALLOWED_PROVIDERS.has(v) ? v : DEFAULTS.provider
+      this._forcePersistSoon()
     },
     setOpenMode(v) {
       this.openMode = v === 'new' ? 'new' : DEFAULTS.openMode
+      this._forcePersistSoon()
     },
 
     // Shortcuts CRUD
     setShortcuts(list) {
       this.shortcuts = normalizeShortcuts(list)
+      this._forcePersistSoon()
     },
     upsertShortcut(item) {
       const [clean] = normalizeShortcuts([item])
@@ -172,11 +189,13 @@ export const useShortcutsStore = defineStore('shortcuts', {
       const idx = this.shortcuts.findIndex((s) => s.id === clean.id)
       if (idx >= 0) this.shortcuts.splice(idx, 1, clean)
       else this.shortcuts.push(clean)
+      this._forcePersistSoon()
     },
     deleteShortcut(id) {
       const target = (id ?? '').toString().trim()
       if (!target) return
       this.shortcuts = this.shortcuts.filter((s) => s.id !== target)
+      this._forcePersistSoon()
     },
     setOrder(ids) {
       try {
@@ -196,16 +215,13 @@ export const useShortcutsStore = defineStore('shortcuts', {
           }
         }
         this.shortcuts = next
-      } catch {
-        // ignore
+      } finally {
+        this._forcePersistSoon()
       }
     },
     reset() {
       Object.assign(this, { ...DEFAULTS })
-      // Write immediately so key is present after reset
-      try {
-        safeSave(this.$state)
-      } catch {}
+      this._forcePersistSoon()
     },
   },
 })
