@@ -178,11 +178,12 @@ function applyChanges() {
                 class="w-5 h-5 rounded-sm"
                 draggable="false"
               />
+              <i v-else class="fa-regular fa-circle text-base opacity-60"></i>
             </span>
 
             <span class="text-slate-200 text-sm truncate">{{ item.label || item.id }}</span>
 
-            <!-- Gray "X" icon button (replaces red Delete button) -->
+            <!-- Gray "X" icon button -->
             <button
               type="button"
               class="ml-auto h-8 w-8 flex items-center justify-center rounded hover:bg-white/10 text-slate-400 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
@@ -275,4 +276,21 @@ function applyChanges() {
 
 <style scoped>
 /* none */
+</style>
+
+<!-- Unscoped: make text selection visible inside the settings modal only -->
+<style>
+/* Selection color for any text selected within the modal (inputs, text, etc.) */
+#shortcuts-settings ::selection,
+#shortcuts-settings input::selection,
+#shortcuts-settings textarea::selection {
+  background: rgba(99, 179, 237, 0.35); /* approx Tailwind sky-400 @ 35% */
+  color: #ffffff;
+}
+#shortcuts-settings ::-moz-selection,
+#shortcuts-settings input::-moz-selection,
+#shortcuts-settings textarea::-moz-selection {
+  background: rgba(99, 179, 237, 0.35);
+  color: #ffffff;
+}
 </style>
