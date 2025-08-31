@@ -1,8 +1,7 @@
 <!-- src/components/shortcuts/ShortcutsManager.vue -->
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { Switch } from '@headlessui/vue'
-import { useShortcutsStore } from '@/stores/shortcuts'
 
 /**
  * Optional props:
@@ -15,151 +14,188 @@ const props = defineProps({
 })
 const emit = defineEmits(['update:shortcuts'])
 
-/* Pinia store for persisting order */
-const store = useShortcutsStore()
-onMounted(() => store.hydrate())
-
-/* ---- Defaults (same set you use in the rail) ---- */
-const DEFAULT_SHORTCUTS = [
-  {
-    id: 'youtube',
-    label: 'YouTube',
-    icon: 'fa-brands fa-youtube',
-    href: 'https://www.youtube.com',
-  },
-  { id: 'github', label: 'GitHub', icon: 'fa-brands fa-github', href: 'https://github.com' },
-  { id: 'gmail', label: 'Gmail', icon: 'fa-regular fa-envelope', href: 'https://mail.google.com' },
-  {
-    id: 'gdrive',
-    label: 'Google Drive',
-    icon: 'fa-brands fa-google-drive',
-    href: 'https://drive.google.com',
-  },
-  { id: 'chatgpt', label: 'ChatGPT', icon: 'fa-solid fa-robot', href: 'https://chat.openai.com' },
-  { id: 'twitter', label: 'Twitter', icon: 'fa-brands fa-x-twitter', href: 'https://twitter.com' },
-  { id: 'reddit', label: 'Reddit', icon: 'fa-brands fa-reddit-alien', href: 'https://reddit.com' },
-  {
-    id: 'linkedin',
-    label: 'LinkedIn',
-    icon: 'fa-brands fa-linkedin',
-    href: 'https://linkedin.com',
-  },
-  {
-    id: 'steam',
-    label: 'Steam',
-    icon: 'fa-brands fa-steam',
-    href: 'https://store.steampowered.com',
-  },
-  { id: 'spotify', label: 'Spotify', icon: 'fa-brands fa-spotify', href: 'https://spotify.com' },
-  {
-    id: 'facebook',
-    label: 'Facebook',
-    icon: 'fa-brands fa-facebook',
-    href: 'https://facebook.com',
-  },
-  {
-    id: 'instagram',
-    label: 'Instagram',
-    icon: 'fa-brands fa-instagram',
-    href: 'https://instagram.com',
-  },
-  { id: 'tiktok', label: 'TikTok', icon: 'fa-brands fa-tiktok', href: 'https://tiktok.com' },
-  {
-    id: 'whatsapp',
-    label: 'WhatsApp',
-    icon: 'fa-brands fa-whatsapp',
-    href: 'https://whatsapp.com',
-  },
-  { id: 'discord', label: 'Discord', icon: 'fa-brands fa-discord', href: 'https://discord.com' },
-  { id: 'amazon', label: 'Amazon', icon: 'fa-brands fa-amazon', href: 'https://amazon.com' },
-  { id: 'netflix', label: 'Netflix', icon: 'fa-solid fa-n', href: 'https://netflix.com' },
-  { id: 'openai', label: 'OpenAI', icon: 'fa-solid fa-brain', href: 'https://openai.com' },
-  {
-    id: 'pinterest',
-    label: 'Pinterest',
-    icon: 'fa-brands fa-pinterest',
-    href: 'https://pinterest.com',
-  },
-  { id: 'apple', label: 'Apple', icon: 'fa-brands fa-apple', href: 'https://apple.com' },
-  {
-    id: 'microsoft',
-    label: 'Microsoft',
-    icon: 'fa-brands fa-microsoft',
-    href: 'https://microsoft.com',
-  },
-  { id: 'slack', label: 'Slack', icon: 'fa-brands fa-slack', href: 'https://slack.com' },
-  { id: 'asana', label: 'Asana', icon: 'fa-solid fa-diagram-project', href: 'https://asana.com' },
-  { id: 'figma', label: 'Figma', icon: 'fa-brands fa-figma', href: 'https://figma.com' },
-  {
-    id: 'dribbble',
-    label: 'Dribbble',
-    icon: 'fa-brands fa-dribbble',
-    href: 'https://dribbble.com',
-  },
-  { id: 'behance', label: 'Behance', icon: 'fa-brands fa-behance', href: 'https://behance.net' },
-  { id: 'trello', label: 'Trello', icon: 'fa-brands fa-trello', href: 'https://trello.com' },
-  { id: 'notion', label: 'Notion', icon: 'fa-regular fa-file-lines', href: 'https://notion.so' },
-  { id: 'medium', label: 'Medium', icon: 'fa-brands fa-medium', href: 'https://medium.com' },
-  {
-    id: 'hn',
-    label: 'Hacker News',
-    icon: 'fa-solid fa-newspaper',
-    href: 'https://news.ycombinator.com',
-  },
-  { id: 'bbc', label: 'BBC', icon: 'fa-solid fa-globe', href: 'https://bbc.com' },
-  { id: 'cnn', label: 'CNN', icon: 'fa-solid fa-tv', href: 'https://cnn.com' },
-  { id: 'nyt', label: 'NY Times', icon: 'fa-regular fa-newspaper', href: 'https://nytimes.com' },
-  {
-    id: 'wapo',
-    label: 'Washington Post',
-    icon: 'fa-solid fa-scroll',
-    href: 'https://washingtonpost.com',
-  },
-  {
-    id: 'bloomberg',
-    label: 'Bloomberg',
-    icon: 'fa-solid fa-chart-line',
-    href: 'https://bloomberg.com',
-  },
-  { id: 'crypto', label: 'Crypto', icon: 'fa-solid fa-coins', href: 'https://coinmarketcap.com' },
-  { id: 'weather', label: 'Weather', icon: 'fa-solid fa-cloud-sun', href: 'https://weather.com' },
-  {
-    id: 'calendar',
-    label: 'Calendar',
-    icon: 'fa-regular fa-calendar',
-    href: 'https://calendar.google.com',
-  },
-  { id: 'maps', label: 'Maps', icon: 'fa-solid fa-map', href: 'https://maps.google.com' },
-  { id: 'photos', label: 'Photos', icon: 'fa-regular fa-image', href: 'https://photos.google.com' },
-]
-
 /* Local list (falls back to internal defaults) */
-const internalShortcuts = ref(props.shortcuts ? [...props.shortcuts] : [...DEFAULT_SHORTCUTS])
-
-/* Apply store.order initially so the Manager opens with saved order */
-function applyInitialOrder() {
-  const ord = Array.isArray(store.order) ? store.order : null
-  if (!ord || ord.length === 0) return
-
-  const map = new Map(internalShortcuts.value.map((s) => [s.id, s]))
-  const out = []
-  const seen = new Set()
-
-  // First: items from stored order that exist
-  for (const id of ord) {
-    const item = map.get(id)
-    if (item && !seen.has(id)) {
-      out.push(item)
-      seen.add(id)
-    }
-  }
-  // Then: any remaining defaults not present in order
-  for (const item of internalShortcuts.value) {
-    if (!seen.has(item.id)) out.push(item)
-  }
-  internalShortcuts.value = out
-}
-applyInitialOrder()
+const internalShortcuts = ref(
+  props.shortcuts
+    ? [...props.shortcuts]
+    : [
+        {
+          id: 'youtube',
+          label: 'YouTube',
+          icon: 'fa-brands fa-youtube',
+          href: 'https://www.youtube.com',
+        },
+        { id: 'github', label: 'GitHub', icon: 'fa-brands fa-github', href: 'https://github.com' },
+        {
+          id: 'gmail',
+          label: 'Gmail',
+          icon: 'fa-regular fa-envelope',
+          href: 'https://mail.google.com',
+        },
+        {
+          id: 'gdrive',
+          label: 'Google Drive',
+          icon: 'fa-brands fa-google-drive',
+          href: 'https://drive.google.com',
+        },
+        {
+          id: 'chatgpt',
+          label: 'ChatGPT',
+          icon: 'fa-solid fa-robot',
+          href: 'https://chat.openai.com',
+        },
+        {
+          id: 'twitter',
+          label: 'Twitter',
+          icon: 'fa-brands fa-x-twitter',
+          href: 'https://twitter.com',
+        },
+        {
+          id: 'reddit',
+          label: 'Reddit',
+          icon: 'fa-brands fa-reddit-alien',
+          href: 'https://reddit.com',
+        },
+        {
+          id: 'linkedin',
+          label: 'LinkedIn',
+          icon: 'fa-brands fa-linkedin',
+          href: 'https://linkedin.com',
+        },
+        {
+          id: 'steam',
+          label: 'Steam',
+          icon: 'fa-brands fa-steam',
+          href: 'https://store.steampowered.com',
+        },
+        {
+          id: 'spotify',
+          label: 'Spotify',
+          icon: 'fa-brands fa-spotify',
+          href: 'https://spotify.com',
+        },
+        {
+          id: 'facebook',
+          label: 'Facebook',
+          icon: 'fa-brands fa-facebook',
+          href: 'https://facebook.com',
+        },
+        {
+          id: 'instagram',
+          label: 'Instagram',
+          icon: 'fa-brands fa-instagram',
+          href: 'https://instagram.com',
+        },
+        { id: 'tiktok', label: 'TikTok', icon: 'fa-brands fa-tiktok', href: 'https://tiktok.com' },
+        {
+          id: 'whatsapp',
+          label: 'WhatsApp',
+          icon: 'fa-brands fa-whatsapp',
+          href: 'https://whatsapp.com',
+        },
+        {
+          id: 'discord',
+          label: 'Discord',
+          icon: 'fa-brands fa-discord',
+          href: 'https://discord.com',
+        },
+        { id: 'amazon', label: 'Amazon', icon: 'fa-brands fa-amazon', href: 'https://amazon.com' },
+        { id: 'netflix', label: 'Netflix', icon: 'fa-solid fa-n', href: 'https://netflix.com' },
+        { id: 'openai', label: 'OpenAI', icon: 'fa-solid fa-brain', href: 'https://openai.com' },
+        {
+          id: 'pinterest',
+          label: 'Pinterest',
+          icon: 'fa-brands fa-pinterest',
+          href: 'https://pinterest.com',
+        },
+        { id: 'apple', label: 'Apple', icon: 'fa-brands fa-apple', href: 'https://apple.com' },
+        {
+          id: 'microsoft',
+          label: 'Microsoft',
+          icon: 'fa-brands fa-microsoft',
+          href: 'https://microsoft.com',
+        },
+        { id: 'slack', label: 'Slack', icon: 'fa-brands fa-slack', href: 'https://slack.com' },
+        {
+          id: 'asana',
+          label: 'Asana',
+          icon: 'fa-solid fa-diagram-project',
+          href: 'https://asana.com',
+        },
+        { id: 'figma', label: 'Figma', icon: 'fa-brands fa-figma', href: 'https://figma.com' },
+        {
+          id: 'dribbble',
+          label: 'Dribbble',
+          icon: 'fa-brands fa-dribbble',
+          href: 'https://dribbble.com',
+        },
+        {
+          id: 'behance',
+          label: 'Behance',
+          icon: 'fa-brands fa-behance',
+          href: 'https://behance.net',
+        },
+        { id: 'trello', label: 'Trello', icon: 'fa-brands fa-trello', href: 'https://trello.com' },
+        {
+          id: 'notion',
+          label: 'Notion',
+          icon: 'fa-regular fa-file-lines',
+          href: 'https://notion.so',
+        },
+        { id: 'medium', label: 'Medium', icon: 'fa-brands fa-medium', href: 'https://medium.com' },
+        {
+          id: 'hn',
+          label: 'Hacker News',
+          icon: 'fa-solid fa-newspaper',
+          href: 'https://news.ycombinator.com',
+        },
+        { id: 'bbc', label: 'BBC', icon: 'fa-solid fa-globe', href: 'https://bbc.com' },
+        { id: 'cnn', label: 'CNN', icon: 'fa-solid fa-tv', href: 'https://cnn.com' },
+        {
+          id: 'nyt',
+          label: 'NY Times',
+          icon: 'fa-regular fa-newspaper',
+          href: 'https://nytimes.com',
+        },
+        {
+          id: 'wapo',
+          label: 'Washington Post',
+          icon: 'fa-solid fa-scroll',
+          href: 'https://washingtonpost.com',
+        },
+        {
+          id: 'bloomberg',
+          label: 'Bloomberg',
+          icon: 'fa-solid fa-chart-line',
+          href: 'https://bloomberg.com',
+        },
+        {
+          id: 'crypto',
+          label: 'Crypto',
+          icon: 'fa-solid fa-coins',
+          href: 'https://coinmarketcap.com',
+        },
+        {
+          id: 'weather',
+          label: 'Weather',
+          icon: 'fa-solid fa-cloud-sun',
+          href: 'https://weather.com',
+        },
+        {
+          id: 'calendar',
+          label: 'Calendar',
+          icon: 'fa-regular fa-calendar',
+          href: 'https://calendar.google.com',
+        },
+        { id: 'maps', label: 'Maps', icon: 'fa-solid fa-map', href: 'https://maps.google.com' },
+        {
+          id: 'photos',
+          label: 'Photos',
+          icon: 'fa-regular fa-image',
+          href: 'https://photos.google.com',
+        },
+      ],
+)
 
 /* Writable computed so a parent can v-model later if desired */
 const shortcutsList = computed({
@@ -171,24 +207,14 @@ const shortcutsList = computed({
 })
 
 /* selection + editing state */
-const activeIconId = ref(shortcutsList.value[0]?.id || 'youtube')
+const activeIconId = ref(shortcutsList.value[0]?.id || null)
 const activeIcon = computed(
   () => shortcutsList.value.find((s) => s.id === activeIconId.value) ?? null,
 )
 const activeIconActive = ref(true)
 const confirmDelete = ref(false)
 
-/* Persist current order to store */
-function persistOrder() {
-  try {
-    const ids = shortcutsList.value.map((s) => s.id)
-    store.setOrder(ids)
-  } catch (err) {
-    void err
-  }
-}
-
-/* ---------------- Drag & Drop state/logic (native HTML5) ---------------- */
+/* ---------------- Drag & Drop (local only; no persistence) ---------------- */
 const draggingId = ref(null)
 const dragOverId = ref(null)
 const dropPos = ref(null) // 'above' | 'below'
@@ -212,7 +238,7 @@ function onDragStart(item, e) {
       e.dataTransfer.effectAllowed = 'move'
       e.dataTransfer.setData('text/plain', item.id)
     } catch (err) {
-      void err
+      /* ignore */
     }
   }
 }
@@ -222,7 +248,7 @@ function onDragOver(item, e) {
     try {
       e.dataTransfer.dropEffect = 'move'
     } catch (err) {
-      void err
+      /* ignore */
     }
   }
   const rect = e.currentTarget.getBoundingClientRect()
@@ -244,7 +270,6 @@ function onDrop(item, e) {
 
   if (fromIdx !== insertIdx) {
     shortcutsList.value = moveItem(shortcutsList.value, fromIdx, insertIdx)
-    persistOrder() // save to store + localStorage
   }
 
   activeIconId.value = draggingId.value
@@ -258,15 +283,20 @@ function onDragEnd() {
   dropPos.value = null
 }
 
-/* actions */
+/* ---------------- Deletion (local only; no persistence) ---------------- */
 function deleteActive() {
   const idx = shortcutsList.value.findIndex((s) => s.id === activeIconId.value)
   if (idx === -1) return (confirmDelete.value = false)
+
+  // Compute next selection
   const nextId = shortcutsList.value[idx + 1]?.id || shortcutsList.value[idx - 1]?.id || null
+
+  // Remove from local list
   shortcutsList.value = shortcutsList.value.filter((_, i) => i !== idx)
+
+  // Update selection + close confirm
   activeIconId.value = nextId
   confirmDelete.value = false
-  persistOrder() // keep store in sync when list changes
 }
 </script>
 
