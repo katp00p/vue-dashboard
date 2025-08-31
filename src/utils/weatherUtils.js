@@ -1,4 +1,3 @@
-// src/utils/weatherUtils.js
 export function codeToText(code) {
   if (code === 0) return 'Clear sky'
   if ([1, 2, 3].includes(code)) return ['Mainly clear', 'Partly cloudy', 'Overcast'][code - 1]
@@ -32,18 +31,54 @@ export function fmtDay(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString(undefined, { weekday: 'short' })
 }
+
 export function fmtDateShort(dateStr) {
   const d = new Date(dateStr + 'T00:00:00')
   return d.toLocaleDateString(undefined, { month: 'short', day: 'numeric' })
 }
+
 export function fmtTime(ts) {
   const d = new Date(ts)
   return d.toLocaleTimeString(undefined, { hour: 'numeric' })
 }
+
 export function fmtHM(ts) {
   const d = new Date(ts)
   return d.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' })
 }
+
 export function round(n) {
   return typeof n === 'number' ? Math.round(n) : n
+}
+
+/* === NEW: wind direction helpers === */
+export function degToCompass(deg) {
+  if (typeof deg !== 'number' || isNaN(deg)) return '—'
+  const dirs = [
+    'N',
+    'NNE',
+    'NE',
+    'ENE',
+    'E',
+    'ESE',
+    'SE',
+    'SSE',
+    'S',
+    'SSW',
+    'SW',
+    'WSW',
+    'W',
+    'WNW',
+    'NW',
+    'NNW',
+  ]
+  const ix = Math.round(deg / 22.5) % 16
+  return dirs[ix]
+}
+
+export function degToArrow(deg) {
+  if (typeof deg !== 'number' || isNaN(deg)) return ''
+  const arrows = ['↑', '↗', '→', '↘', '↓', '↙', '←', '↖'] // 0=N, 90=E, etc.
+  const ix = Math.round(deg / 45) % 8
+  return arrows[ix]
 }

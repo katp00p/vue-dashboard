@@ -9,13 +9,15 @@ import {
   fmtDay,
   fmtDateShort,
   round,
+  degToCompass,
+  degToArrow,
 } from '../../utils/weatherUtils'
 
 const props = defineProps({
   modelValue: { type: Boolean, default: false },
   current: { type: Object, default: null },
   daily: { type: Array, default: () => [] },
-  next48: { type: Array, default: () => [] }, // includes: time, temp, feels, code, pprob, pamt, isDay
+  next48: { type: Array, default: () => [] }, // includes ws, wg, wd
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -142,7 +144,9 @@ const week2 = computed(() => props.daily.slice(7, 14))
                     <div class="w-[56px] text-right">Feels</div>
                     <div class="w-[48px] text-right">💧%</div>
                     <div class="w-[44px] text-right">mm</div>
-                    <!-- ✅ new column -->
+                    <div class="w-[128px] text-right">Wind</div>
+                    <!-- speed/gust + dir -->
+                    <div class="w-[44px] text-right">RH%</div>
                   </div>
 
                   <!-- rows -->
@@ -151,11 +155,10 @@ const week2 = computed(() => props.daily.slice(7, 14))
                       v-for="h in next48"
                       :key="h.time"
                       class="flex items-center px-3 py-2 text-sm leading-4 whitespace-nowrap tabular-nums"
-                      :aria-label="`${fmtTime(h.time)}: ${codeToText(h.code)}, ${Math.round(h.temp ?? 0)}°C, precip ${h.pprob ?? 0}%, amount ${(h.pamt ?? 0).toFixed(1)} mm`"
+                      :aria-label="`${fmtTime(h.time)}: ${codeToText(h.code)}, ${Math.round(h.temp ?? 0)}°C, feels ${Math.round(h.feels ?? 0)}°C, precip ${h.pprob ?? 0}%, amount ${(h.pamt ?? 0).toFixed(1)} mm, wind ${Math.round(h.ws ?? 0)} km/h gust ${Math.round(h.wg ?? 0)} km/h from ${h.wd != null ? degToCompass(h.wd) : '—'}, RH ${Math.round(h.rh ?? 0)}%`"
                     >
                       <div class="w-[64px] text-slate-300">{{ fmtTime(h.time) }}</div>
                       <div class="w-[20px] text-center">
-                        <!-- ✅ use hourly isDay -->
                         <i
                           :class="codeToIcon(h.code, h.isDay ?? true)"
                           class="text-[12px] text-white"
@@ -174,6 +177,25 @@ const week2 = computed(() => props.daily.slice(7, 14))
                       <div class="w-[48px] text-right text-slate-300">{{ h.pprob ?? 0 }}%</div>
                       <div class="w-[44px] text-right text-slate-300">
                         {{ h.pamt != null ? h.pamt.toFixed(1) : '—' }}
+                      </div>
+
+                      <!-- ✅ Wind: speed/gust + direction -->
+                      <div class="w-[128px] text-right text-slate-300">
+                        <span class="text-slate-100">{{
+                          h.ws != null ? Math.round(h.ws) : '—'
+                        }}</span>
+                        <span class="text-slate-500">/</span>
+                        <span>{{ h.wg != null ? Math.round(h.wg) : '—' }}</span>
+                        <span v-if="h.wd != null" class="ml-1">
+                          {{ degToCompass(h.wd) }}
+                          <span aria-hidden="true" class="text-slate-500">
+                            {{ degToArrow(h.wd) }}</span
+                          >
+                        </span>
+                      </div>
+
+                      <div class="w-[44px] text-right text-slate-300">
+                        {{ h.rh != null ? Math.round(h.rh) : '—' }}
                       </div>
                     </div>
                   </div>

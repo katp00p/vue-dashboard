@@ -63,7 +63,7 @@ async function fetchWeather() {
           'uv_index_max',
           'weathercode',
         ].join(','),
-        // ✅ add is_day so hourly icons reflect night/day
+        // ➕ Add more hourly: is_day, wind, humidity, uv, plus what we already had
         hourly: [
           'temperature_2m',
           'apparent_temperature',
@@ -71,6 +71,11 @@ async function fetchWeather() {
           'precipitation',
           'weathercode',
           'is_day',
+          'windspeed_10m',
+          'windgusts_10m',
+          'winddirection_10m',
+          'relative_humidity_2m',
+          'uv_index',
         ].join(','),
         forecast_days: 14,
         timezone: 'auto',
@@ -136,9 +141,13 @@ async function fetchWeather() {
           feels: h.apparent_temperature?.[i],
           code: h.weathercode?.[i],
           pprob: h.precipitation_probability?.[i],
-          // ✅ include precipitation amount (mm) and isDay per hour
           pamt: h.precipitation?.[i],
           isDay: h.is_day?.[i] === 1,
+          ws: h.windspeed_10m?.[i],
+          wg: h.windgusts_10m?.[i],
+          wd: h.winddirection_10m?.[i],
+          rh: h.relative_humidity_2m?.[i],
+          uv: h.uv_index?.[i],
         })
       }
     }
@@ -167,19 +176,15 @@ onMounted(fetchWeather)
     @click="openModal"
     @keydown="onKeyActivate"
   >
-    <!-- Spinner -->
     <div v-if="loading" class="flex items-center justify-center h-40">
       <VueSpinnerOval size="48" color="#38bdf8" />
     </div>
 
-    <!-- Error -->
     <div v-else-if="error" class="text-center text-red-400 py-10">
       {{ error }}
     </div>
 
-    <!-- Content -->
     <template v-else>
-      <!-- Header / Current -->
       <div class="flex items-center justify-between mb-4">
         <div>
           <h2 id="weather-title" class="card-title text-slate-100 font-semibold tracking-wide">
@@ -196,7 +201,6 @@ onMounted(fetchWeather)
         </div>
       </div>
 
-      <!-- 7-Day Forecast (compact) -->
       <div class="grid grid-cols-7 gap-3 text-center text-slate-300 text-sm mt-3" role="list">
         <div
           v-for="d in daily.slice(0, 7)"
