@@ -148,7 +148,7 @@ const week2 = computed(() => props.daily.slice(7, 14))
                     <div
                       v-for="h in next24"
                       :key="h.time"
-                      class="flex items-center px-3 py-2 text-[11px] leading-3 whitespace-nowrap tabular-nums"
+                      class="flex items-center px-3 py-2 text-sm leading-4 whitespace-nowrap tabular-nums"
                       :aria-label="`${fmtTime(h.time)}: ${codeToText(h.code)}, ${Math.round(h.temp ?? 0)}°C, precip ${h.pprob ?? 0}%`"
                     >
                       <div class="w-[64px] text-slate-300">{{ fmtTime(h.time) }}</div>
