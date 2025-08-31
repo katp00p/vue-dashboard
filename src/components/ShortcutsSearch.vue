@@ -36,7 +36,7 @@ const providerOpt = computed(() => optionByValue[store.provider] || null)
 const providerSi = computed(() => providerOpt.value?.si || null)
 const providerFA = computed(() => providerOpt.value?.icon || null)
 
-/* Registry for all supported shortcuts (same data as manager uses) */
+/* Registry for supported shortcuts (same data the manager uses) */
 const REGISTRY = Object.freeze({
   youtube: {
     id: 'youtube',
@@ -240,20 +240,10 @@ const REGISTRY = Object.freeze({
   },
 })
 
-/**
- * IMPORTANT CHANGE:
- * - If there is a saved order, render ONLY those ids (mapped through REGISTRY).
- * - Do NOT append any missing defaults. This makes deletions persist visually.
- * - If there is NO saved order yet, fall back to initial full list (all registry ids).
- */
+/* Render ONLY what’s saved in the store */
 const orderedShortcuts = computed(() => {
   const ord = Array.isArray(store.order) ? store.order : null
-
-  if (ord && ord.length) {
-    return ord.map((id) => REGISTRY[id]).filter(Boolean) // ignore unknown ids
-  }
-
-  // First run: no saved order yet → show all defaults in the registry order
+  if (ord && ord.length) return ord.map((id) => REGISTRY[id]).filter(Boolean)
   return Object.values(REGISTRY)
 })
 
@@ -261,11 +251,8 @@ async function onSubmit() {
   const text = q.value.trim()
   if (!text) return
   const href = urlFor(store.provider, text)
-  if (store.openMode === 'new') {
-    window.open(href, '_blank', 'noopener,noreferrer')
-  } else {
-    window.location.assign(href)
-  }
+  if (store.openMode === 'new') window.open(href, '_blank', 'noopener,noreferrer')
+  else window.location.assign(href)
 }
 </script>
 
@@ -273,7 +260,7 @@ async function onSubmit() {
   <!-- ===== Shortcuts + Search ===== -->
   <section class="mb-4 shrink-0" id="shortcuts">
     <div class="glass rounded-md px-4 py-3 flex items-center gap-4 overflow-hidden">
-      <!-- Rail -->
+      <!-- Scrollable rail (icons only) -->
       <div
         class="shortcuts-rail flex items-center gap-3 flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain h-12 [&>a]:inline-flex [&>a]:items-center [&>a]:justify-center [&>a]:leading-none [&>a]:h-12 [&>a>i]:block [&>a>i]:leading-none"
       >
@@ -286,20 +273,25 @@ async function onSubmit() {
         >
           <i :class="item.icon"></i>
         </a>
-
-        <!-- Gear opens settings modal (fixed at the end; unchanged) -->
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition w-12 min-w-[3rem] justify-center"
-          href="#"
-          title="Settings"
-          @click.prevent="isSettingsOpen = true"
-        >
-          <i class="fa-solid fa-gear"></i>
-        </a>
       </div>
 
       <!-- Spacer -->
       <div class="flex-1"></div>
+
+      <!-- Gear: smaller, forced color, vertically centered, fixed size -->
+      <a
+        class="shortcut text-2xl drop-shadow-lg hover:scale-110 transition inline-flex items-center justify-center h-12 w-12 min-w-[3rem]"
+        href="#"
+        title="Settings"
+        @click.prevent="isSettingsOpen = true"
+        style="color: #88929b !important"
+      >
+        <i
+          class="fa-solid fa-gear leading-none"
+          aria-hidden="true"
+          style="color: #88929b !important"
+        ></i>
+      </a>
 
       <!-- Right: Unified Search -->
       <form class="hidden md:flex items-center gap-2" @submit.prevent="onSubmit">
