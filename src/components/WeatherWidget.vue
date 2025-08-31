@@ -2,18 +2,34 @@
 import { ref, computed, onMounted } from 'vue'
 import axios from 'axios'
 import { VueSpinnerOval } from 'vue3-spinners'
+import { Dialog, DialogPanel, TransitionRoot, TransitionChild } from '@headlessui/vue'
 
 // ==== Location (your coords) ====
 const LAT = 43.764315
 const LON = -79.199
 
+// ==== Modal state ====
+const isOpen = ref(false)
+function openModal() {
+  isOpen.value = true
+}
+function closeModal() {
+  isOpen.value = false
+}
+function onKeyActivate(e) {
+  if (e.key === 'Enter' || e.key === ' ') {
+    e.preventDefault()
+    openModal()
+  }
+}
+
 // ==== Reactive state ====
 const loading = ref(true)
 const error = ref('')
-const current = ref(null) // { temp, code, isDay }
-const daily = ref([]) // [{ date, tMax, tMin, code }...]
+const current = ref(null)
+const daily = ref([])
 
-// ==== Helpers: weather code → text/icon ====
+// ==== Helpers ====
 function codeToText(code) {
   if (code === 0) return 'Clear sky'
   if ([1, 2, 3].includes(code)) return ['Mainly clear', 'Partly cloudy', 'Overcast'][code - 1]
@@ -52,13 +68,12 @@ function round(n) {
   return typeof n === 'number' ? Math.round(n) : n
 }
 
-// ==== Derived values ====
+// ==== Derived ====
 const currentText = computed(() => (current.value ? codeToText(current.value.code) : '—'))
 const currentIcon = computed(() =>
   current.value ? codeToIcon(current.value.code, current.value.isDay) : 'fa-solid fa-cloud',
 )
 const currentTemp = computed(() => (current.value ? `${round(current.value.temp)}°C` : '—'))
-
 const todayHi = computed(() => (daily.value.length ? `${round(daily.value[0].tMax)}°` : '—'))
 const todayLo = computed(() => (daily.value.length ? `${round(daily.value[0].tMin)}°` : '—'))
 
@@ -72,7 +87,11 @@ async function fetchWeather() {
 
     if (data?.current_weather) {
       const { temperature, weathercode, is_day } = data.current_weather
-      current.value = { temp: temperature, code: weathercode, isDay: Boolean(is_day) }
+      current.value = {
+        temp: temperature,
+        code: weathercode,
+        isDay: Boolean(is_day),
+      }
     }
 
     const days = []
@@ -82,7 +101,12 @@ async function fetchWeather() {
     const dates = data?.daily?.time || []
 
     for (let i = 0; i < dates.length; i++) {
-      days.push({ date: dates[i], tMax: tMax[i], tMin: tMin[i], code: codes[i] })
+      days.push({
+        date: dates[i],
+        tMax: tMax[i],
+        tMin: tMin[i],
+        code: codes[i],
+      })
     }
     daily.value = days
   } catch (e) {
@@ -96,19 +120,30 @@ onMounted(fetchWeather)
 </script>
 
 <template>
+  <!-- WEATHER -->
   <section
-    class="glass rounded-md shadow-card p-5 w-full overflow-hidden flex items-center justify-center min-h-[180px]"
+    class="glass rounded-md shadow-card p-5 w-full overflow-hidden cursor-pointer hover:ring-1 ring-accent/40 transition"
     id="widget-weather"
     aria-labelledby="weather-title"
+    aria-haspopup="dialog"
+    aria-controls="weather-details-modal"
+    role="button"
+    tabindex="0"
+    @click="openModal"
+    @keydown="onKeyActivate"
   >
-    <!-- Spinner when loading -->
-    <VueSpinnerOval v-if="loading" color="#ffffff" size="48px" />
+    <!-- Show spinner while loading -->
+    <div v-if="loading" class="flex items-center justify-center h-40">
+      <VueSpinnerOval size="48" color="#38bdf8" />
+    </div>
 
-    <!-- Error -->
-    <p v-else-if="error" class="text-red-400 text-sm">{{ error }}</p>
+    <!-- Show error if failed -->
+    <div v-else-if="error" class="text-center text-red-400 py-10">
+      {{ error }}
+    </div>
 
-    <!-- Weather content -->
-    <div v-else class="w-full">
+    <!-- Show weather once loaded -->
+    <template v-else>
       <!-- Header / Current -->
       <div class="flex items-center justify-between mb-4">
         <div>
@@ -117,7 +152,6 @@ onMounted(fetchWeather)
           </h2>
           <p class="text-slate-300 text-sm">{{ currentText }}</p>
         </div>
-
         <div class="flex items-center gap-3">
           <i :class="[currentIcon]" class="text-4xl text-white" aria-hidden="true"></i>
           <div class="text-right">
@@ -141,10 +175,66 @@ onMounted(fetchWeather)
           <p class="text-sm">{{ round(d.tMax) }}° / {{ round(d.tMin) }}°</p>
         </div>
       </div>
-    </div>
+    </template>
   </section>
+
+  <!-- ===== Modal (empty for now) ===== -->
+  <TransitionRoot as="template" :show="isOpen">
+    <Dialog as="div" class="relative z-50" @close="closeModal">
+      <!-- Overlay -->
+      <TransitionChild
+        as="template"
+        enter="ease-out duration-200"
+        enter-from="opacity-0"
+        enter-to="opacity-100"
+        leave="ease-in duration-150"
+        leave-from="opacity-100"
+        leave-to="opacity-0"
+      >
+        <div class="fixed inset-0 bg-black/60" />
+      </TransitionChild>
+
+      <!-- Panel -->
+      <div class="fixed inset-0 overflow-y-auto" id="weather-details-modal">
+        <div class="flex min-h-full items-center justify-center p-4">
+          <TransitionChild
+            as="template"
+            enter="ease-out duration-200"
+            enter-from="opacity-0 translate-y-2 scale-95"
+            enter-to="opacity-100 translate-y-0 scale-100"
+            leave="ease-in duration-150"
+            leave-from="opacity-100 translate-y-0 scale-100"
+            leave-to="opacity-0 translate-y-2 scale-95"
+          >
+            <DialogPanel
+              class="w-full max-w-2xl glass rounded-2xl shadow-xl p-6 focus:outline-none"
+            >
+              <div class="flex items-start justify-between mb-2">
+                <h3 class="text-lg font-semibold text-slate-100">Weather details</h3>
+                <button
+                  type="button"
+                  @click="closeModal"
+                  class="text-slate-300 hover:text-slate-100 transition"
+                  aria-label="Close"
+                >
+                  <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+              </div>
+
+              <!-- Empty body for now -->
+              <div class="text-slate-300">
+                <p class="text-sm opacity-70">More data coming soon…</p>
+              </div>
+            </DialogPanel>
+          </TransitionChild>
+        </div>
+      </div>
+    </Dialog>
+  </TransitionRoot>
 </template>
 
 <style scoped>
-/* nothing special here */
+#widget-weather .card-title {
+  letter-spacing: 0.02em;
+}
 </style>
