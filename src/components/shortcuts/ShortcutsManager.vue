@@ -178,18 +178,19 @@ function applyChanges() {
                 class="w-5 h-5 rounded-sm"
                 draggable="false"
               />
-              <i v-else class="fa-regular fa-circle text-base opacity-60"></i>
             </span>
 
             <span class="text-slate-200 text-sm truncate">{{ item.label || item.id }}</span>
 
+            <!-- Gray "X" icon button (replaces red Delete button) -->
             <button
               type="button"
-              class="ml-auto px-2 py-1 rounded bg-[#553744] text-slate-100 border border-white/10 hover:bg-[#6a4756] focus:outline-none focus:ring-2 focus:ring-sky-400/40 text-xs"
+              class="ml-auto h-8 w-8 flex items-center justify-center rounded hover:bg-white/10 text-slate-400 hover:text-slate-100 focus:outline-none focus:ring-2 focus:ring-sky-400/40"
               @click.stop="removeItem(item.id)"
+              aria-label="Delete"
               title="Delete"
             >
-              Delete
+              <i class="fa-solid fa-xmark text-base leading-none"></i>
             </button>
           </div>
         </div>
