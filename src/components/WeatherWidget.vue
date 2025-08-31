@@ -8,7 +8,6 @@ import { codeToText, codeToIcon, fmtDay, round } from '../utils/weatherUtils'
 const LAT = 43.764315
 const LON = -79.199
 
-// Modal state
 const isOpen = ref(false)
 function openModal() {
   isOpen.value = true
@@ -20,14 +19,12 @@ function onKeyActivate(e) {
   }
 }
 
-// Reactive state
 const loading = ref(true)
 const error = ref('')
-const current = ref(null) // { temp, code, isDay, windspeed, winddirection, time }
-const daily = ref([]) // 14 days
-const next48 = ref([]) // next 48 hours list
+const current = ref(null)
+const daily = ref([])
+const next48 = ref([])
 
-// Derived (widget header)
 const currentText = computed(() => (current.value ? codeToText(current.value.code) : '—'))
 const currentIcon = computed(() =>
   current.value ? codeToIcon(current.value.code, current.value.isDay) : 'fa-solid fa-cloud',
@@ -36,7 +33,6 @@ const currentTemp = computed(() => (current.value ? `${round(current.value.temp)
 const todayHi = computed(() => (daily.value.length ? `${round(daily.value[0].tMax)}°` : '—'))
 const todayLo = computed(() => (daily.value.length ? `${round(daily.value[0].tMin)}°` : '—'))
 
-// Fetch (loop-proof)
 let fetching = false
 async function fetchWeather() {
   if (fetching) return
@@ -49,6 +45,7 @@ async function fetchWeather() {
         latitude: LAT,
         longitude: LON,
         current_weather: true,
+        models: 'gfs_seamless',
         daily: [
           'temperature_2m_max',
           'temperature_2m_min',
@@ -63,7 +60,6 @@ async function fetchWeather() {
           'uv_index_max',
           'weathercode',
         ].join(','),
-        // ➕ Add more hourly: is_day, wind, humidity, uv, plus what we already had
         hourly: [
           'temperature_2m',
           'apparent_temperature',
@@ -76,6 +72,10 @@ async function fetchWeather() {
           'winddirection_10m',
           'relative_humidity_2m',
           'uv_index',
+          'pressure_msl',
+          'surface_pressure',
+          'visibility',
+          'snow_depth',
         ].join(','),
         forecast_days: 14,
         timezone: 'auto',
@@ -83,7 +83,6 @@ async function fetchWeather() {
       timeout: 12000,
     })
 
-    // current
     if (data?.current_weather) {
       const { temperature, weathercode, is_day, windspeed, winddirection, time } =
         data.current_weather
@@ -99,7 +98,6 @@ async function fetchWeather() {
       current.value = null
     }
 
-    // daily (14 days)
     const d = data?.daily || {}
     const days = []
     const len = (d.time || []).length
@@ -122,11 +120,9 @@ async function fetchWeather() {
     }
     daily.value = days
 
-    // hourly → next 48 hours list
     const h = data?.hourly || {}
     next48.value = []
     if (h.time?.length) {
-      // align to current hour
       let idx = 0
       if (current.value?.time) {
         const curHour = current.value.time.slice(0, 13)
@@ -148,6 +144,9 @@ async function fetchWeather() {
           wd: h.winddirection_10m?.[i],
           rh: h.relative_humidity_2m?.[i],
           uv: h.uv_index?.[i],
+          press: h.pressure_msl?.[i] ?? h.surface_pressure?.[i], // hPa
+          vis: h.visibility?.[i], // meters
+          snow: h.snow_depth?.[i], // meters
         })
       }
     }
@@ -164,7 +163,6 @@ onMounted(fetchWeather)
 </script>
 
 <template>
-  <!-- WEATHER (clickable to open modal) -->
   <section
     class="glass rounded-md shadow-card p-5 w-full overflow-hidden cursor-pointer hover:ring-1 ring-accent/40 transition"
     id="widget-weather"
@@ -217,7 +215,6 @@ onMounted(fetchWeather)
     </template>
   </section>
 
-  <!-- Details Modal -->
   <WeatherDetailsModal v-model="isOpen" :current="current" :daily="daily" :next48="next48" />
 </template>
 

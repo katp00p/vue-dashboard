@@ -17,7 +17,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   current: { type: Object, default: null },
   daily: { type: Array, default: () => [] },
-  next48: { type: Array, default: () => [] }, // time,temp,feels,pprob,pamt,ws,wg,wd,rh,isDay
+  next48: { type: Array, default: () => [] }, // includes press(hPa), vis(m), snow(m)
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -35,42 +35,57 @@ const todayLo = computed(() => (props.daily.length ? `${round(props.daily[0].tMi
 const week1 = computed(() => props.daily.slice(0, 7))
 const week2 = computed(() => props.daily.slice(7, 14))
 
+// Use first hour in next48 as "now" detail source (aligned to current hour)
+const nowHour = computed(() => (props.next48 && props.next48.length ? props.next48[0] : null))
+
+// Sunrise/Sunset/Day length
+const sunrise = computed(() => props.daily?.[0]?.sunrise || null)
+const sunset = computed(() => props.daily?.[0]?.sunset || null)
+const dayLength = computed(() => {
+  if (!sunrise.value || !sunset.value) return '—'
+  const s = new Date(sunrise.value)
+  const e = new Date(sunset.value)
+  const ms = e - s
+  if (!(ms > 0)) return '—'
+  const h = Math.floor(ms / 3600000)
+  const m = Math.round((ms % 3600000) / 60000)
+  return `${h}h ${m}m`
+})
+
 // End-of-day markers
 const isEndOfDay = (ts) => new Date(ts).getHours() === 23 // 11 PM
 const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
 </script>
 
 <template>
-  <TransitionRoot as="template" :show="modelValue">
+  <TransitionRoot :show="modelValue">
     <Dialog as="div" class="relative z-50" @close="close">
       <!-- Overlay -->
       <TransitionChild
-        as="template"
+        as="div"
         enter="ease-out duration-200"
         enter-from="opacity-0"
         enter-to="opacity-100"
         leave="ease-in duration-150"
         leave-from="opacity-100"
         leave-to="opacity-0"
-      >
-        <div class="fixed inset-0 bg-black/60" />
-      </TransitionChild>
+        class="fixed inset-0 bg-black/60"
+      />
 
       <!-- Panel -->
       <div class="fixed inset-0 overflow-y-auto" id="weather-details-modal">
         <div class="flex min-h-full items-center justify-center p-4">
           <TransitionChild
-            as="template"
+            as="div"
             enter="ease-out duration-200"
             enter-from="opacity-0 translate-y-2 scale-95"
             enter-to="opacity-100 translate-y-0 scale-100"
             leave="ease-in duration-150"
             leave-from="opacity-100 translate-y-0 scale-100"
             leave-to="opacity-0 translate-y-2 scale-95"
+            class="w-full max-w-5xl"
           >
-            <DialogPanel
-              class="w-full max-w-4xl glass rounded-2xl shadow-xl p-6 focus:outline-none"
-            >
+            <DialogPanel class="glass rounded-2xl shadow-xl p-6 focus:outline-none">
               <div class="flex items-start justify-between mb-5">
                 <h3 class="text-lg font-semibold text-slate-100">Weather details</h3>
                 <button
@@ -83,8 +98,9 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
                 </button>
               </div>
 
-              <!-- NOW -->
+              <!-- NOW (expanded) -->
               <section class="mb-5 rounded-xl border border-white/20 bg-white/5 p-4">
+                <!-- top row -->
                 <div class="flex flex-wrap items-center justify-between gap-4">
                   <div class="flex items-center gap-3">
                     <i :class="[currentIcon]" class="text-3xl text-white" aria-hidden="true"></i>
@@ -106,34 +122,103 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
                   </div>
                 </div>
 
-                <div class="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3 text-sm">
+                <!-- rich stats grid for "now" -->
+                <div class="mt-4 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 text-sm">
                   <div class="text-slate-300">
-                    Feels like<br />
+                    Feels like (now)<br />
                     <span class="text-slate-100 font-semibold">
-                      {{ daily[0]?.feelsMax != null ? Math.round(daily[0].feelsMax) : '—' }}° /
-                      {{ daily[0]?.feelsMin != null ? Math.round(daily[0].feelsMin) : '—' }}°
+                      {{ nowHour?.feels != null ? Math.round(nowHour.feels) : '—' }}°
                     </span>
                   </div>
+
                   <div class="text-slate-300">
-                    Wind<br />
+                    Wind (now)<br />
                     <span class="text-slate-100 font-semibold">
-                      {{ current?.windspeed != null ? Math.round(current.windspeed) : '—' }} km/h
+                      {{ nowHour?.ws != null ? Math.round(nowHour.ws) : '—' }}
+                    </span>
+                    <span class="text-slate-500">/</span>
+                    <span>{{ nowHour?.wg != null ? Math.round(nowHour.wg) : '—' }}</span>
+                    <span v-if="nowHour?.wd != null" class="ml-1">
+                      {{ nowHour?.wd != null ? degToCompass(nowHour.wd) : '' }}
+                      <span aria-hidden="true" class="text-slate-500">
+                        {{ nowHour?.wd != null ? degToArrow(nowHour.wd) : '' }}</span
+                      >
+                    </span>
+                    <span class="text-slate-400"> km/h</span>
+                  </div>
+
+                  <div class="text-slate-300">
+                    Humidity<br />
+                    <span class="text-slate-100 font-semibold">
+                      {{ nowHour?.rh != null ? Math.round(nowHour.rh) : '—' }}%
                     </span>
                   </div>
+
                   <div class="text-slate-300">
                     Precip chance<br />
-                    <span class="text-slate-100 font-semibold"
-                      >{{ daily[0]?.precipProbMax ?? '—' }}%</span
-                    >
+                    <span class="text-slate-100 font-semibold"> {{ nowHour?.pprob ?? '—' }}% </span>
                   </div>
+
                   <div class="text-slate-300">
-                    UV max today<br />
-                    <span class="text-slate-100 font-semibold">{{ daily[0]?.uvMax ?? '—' }}</span>
+                    Precip amount<br />
+                    <span class="text-slate-100 font-semibold">
+                      {{ nowHour?.pamt != null ? nowHour.pamt.toFixed(1) : '—' }} mm
+                    </span>
+                  </div>
+
+                  <div class="text-slate-300">
+                    UV index (now)<br />
+                    <span class="text-slate-100 font-semibold">
+                      {{ nowHour?.uv != null ? Math.round(nowHour.uv) : '—' }}
+                    </span>
+                  </div>
+
+                  <!-- ➕ NEW: Pressure -->
+                  <div class="text-slate-300">
+                    Pressure (MSL)<br />
+                    <span class="text-slate-100 font-semibold">
+                      {{ nowHour?.press != null ? Math.round(nowHour.press) : '—' }} hPa
+                    </span>
+                  </div>
+
+                  <!-- ➕ NEW: Visibility -->
+                  <div class="text-slate-300">
+                    Visibility<br />
+                    <span class="text-slate-100 font-semibold">
+                      {{ nowHour?.vis != null ? (nowHour.vis / 1000).toFixed(1) : '—' }} km
+                    </span>
+                  </div>
+
+                  <!-- ➕ NEW: Snow cover (depth) -->
+                  <div class="text-slate-300">
+                    Snow cover<br />
+                    <span class="text-slate-100 font-semibold">
+                      {{ nowHour?.snow != null ? Math.round(nowHour.snow * 100) : '—' }} cm
+                    </span>
+                  </div>
+
+                  <div class="text-slate-300">
+                    Sunrise<br />
+                    <span class="text-slate-100 font-semibold">
+                      {{ sunrise ? fmtHM(sunrise) : '—' }}
+                    </span>
+                  </div>
+
+                  <div class="text-slate-300">
+                    Sunset<br />
+                    <span class="text-slate-100 font-semibold">
+                      {{ sunset ? fmtHM(sunset) : '—' }}
+                    </span>
+                  </div>
+
+                  <div class="text-slate-300">
+                    Day length<br />
+                    <span class="text-slate-100 font-semibold">{{ dayLength }}</span>
                   </div>
                 </div>
               </section>
 
-              <!-- HOURLY -->
+              <!-- HOURLY (unchanged) -->
               <section class="mb-6">
                 <p class="text-slate-400 text-[10px] uppercase tracking-wide mb-2">Next 48 hours</p>
 
@@ -177,7 +262,6 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
                         {{ codeToText(h.code) }}
                       </div>
 
-                      <!-- centered numeric cells -->
                       <div class="w-[56px] flex justify-center text-slate-100 font-semibold">
                         {{ h.temp != null ? Math.round(h.temp) : '—' }}°
                       </div>
@@ -211,7 +295,7 @@ const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
                 </div>
               </section>
 
-              <!-- TWO-WEEK -->
+              <!-- TWO-WEEK (unchanged) -->
               <section>
                 <p class="text-slate-400 text-xs uppercase tracking-wide mb-2">Two-week outlook</p>
 
