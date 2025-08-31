@@ -15,8 +15,7 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   current: { type: Object, default: null },
   daily: { type: Array, default: () => [] },
-  // ✅ use next48 now
-  next48: { type: Array, default: () => [] },
+  next48: { type: Array, default: () => [] }, // includes: time, temp, feels, code, pprob, pamt, isDay
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -142,6 +141,8 @@ const week2 = computed(() => props.daily.slice(7, 14))
                     <div class="w-[56px] text-right">Temp</div>
                     <div class="w-[56px] text-right">Feels</div>
                     <div class="w-[48px] text-right">💧%</div>
+                    <div class="w-[44px] text-right">mm</div>
+                    <!-- ✅ new column -->
                   </div>
 
                   <!-- rows -->
@@ -150,12 +151,13 @@ const week2 = computed(() => props.daily.slice(7, 14))
                       v-for="h in next48"
                       :key="h.time"
                       class="flex items-center px-3 py-2 text-sm leading-4 whitespace-nowrap tabular-nums"
-                      :aria-label="`${fmtTime(h.time)}: ${codeToText(h.code)}, ${Math.round(h.temp ?? 0)}°C, precip ${h.pprob ?? 0}%`"
+                      :aria-label="`${fmtTime(h.time)}: ${codeToText(h.code)}, ${Math.round(h.temp ?? 0)}°C, precip ${h.pprob ?? 0}%, amount ${(h.pamt ?? 0).toFixed(1)} mm`"
                     >
                       <div class="w-[64px] text-slate-300">{{ fmtTime(h.time) }}</div>
                       <div class="w-[20px] text-center">
+                        <!-- ✅ use hourly isDay -->
                         <i
-                          :class="codeToIcon(h.code, true)"
+                          :class="codeToIcon(h.code, h.isDay ?? true)"
                           class="text-[12px] text-white"
                           aria-hidden="true"
                         ></i>
@@ -170,6 +172,9 @@ const week2 = computed(() => props.daily.slice(7, 14))
                         {{ h.feels != null ? Math.round(h.feels) : '—' }}°
                       </div>
                       <div class="w-[48px] text-right text-slate-300">{{ h.pprob ?? 0 }}%</div>
+                      <div class="w-[44px] text-right text-slate-300">
+                        {{ h.pamt != null ? h.pamt.toFixed(1) : '—' }}
+                      </div>
                     </div>
                   </div>
                 </div>

@@ -63,12 +63,14 @@ async function fetchWeather() {
           'uv_index_max',
           'weathercode',
         ].join(','),
+        // ✅ add is_day so hourly icons reflect night/day
         hourly: [
           'temperature_2m',
           'apparent_temperature',
           'precipitation_probability',
           'precipitation',
           'weathercode',
+          'is_day',
         ].join(','),
         forecast_days: 14,
         timezone: 'auto',
@@ -134,6 +136,9 @@ async function fetchWeather() {
           feels: h.apparent_temperature?.[i],
           code: h.weathercode?.[i],
           pprob: h.precipitation_probability?.[i],
+          // ✅ include precipitation amount (mm) and isDay per hour
+          pamt: h.precipitation?.[i],
+          isDay: h.is_day?.[i] === 1,
         })
       }
     }
@@ -216,7 +221,6 @@ onMounted(fetchWeather)
 #widget-weather .card-title {
   letter-spacing: 0.02em;
 }
-/* Lighter scrollbars on dark */
 ::-webkit-scrollbar {
   height: 6px;
   width: 8px;
