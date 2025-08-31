@@ -1,3 +1,4 @@
+// eslint.config.js
 import { defineConfig, globalIgnores } from 'eslint/config'
 import globals from 'globals'
 import js from '@eslint/js'
@@ -23,4 +24,13 @@ export default defineConfig([
   js.configs.recommended,
   ...pluginVue.configs['flat/essential'],
   skipFormatting,
+
+  // ---- Rule overrides (last block wins) ----
+  {
+    name: 'app/allow-empty-catch',
+    rules: {
+      // Allow empty catch blocks (still flags other empty blocks)
+      'no-empty': ['error', { allowEmptyCatch: true }],
+    },
+  },
 ])

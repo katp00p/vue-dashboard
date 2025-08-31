@@ -4,11 +4,13 @@ import { ref, computed } from 'vue'
 import { Switch } from '@headlessui/vue'
 
 /**
- * Optional prop lets a parent provide/own the list.
- * If omitted, we use an internal list (matches your current UI).
+ * Optional props:
+ * - shortcuts: parent-provided list (else we use an internal list)
+ * - showDragHandle: if true, shows the 6-dot handle; default false
  */
 const props = defineProps({
   shortcuts: { type: Array, default: null },
+  showDragHandle: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:shortcuts'])
 
@@ -212,14 +214,81 @@ const activeIcon = computed(
 const activeIconActive = ref(true)
 const confirmDelete = ref(false)
 
+/* ---------------- Drag & Drop state/logic (native HTML5) ---------------- */
+const draggingId = ref(null)
+const dragOverId = ref(null)
+const dropPos = ref(null) // 'above' | 'below'
+
+function indexById(id) {
+  return shortcutsList.value.findIndex((s) => s.id === id)
+}
+function moveItem(arr, from, to) {
+  const copy = [...arr]
+  const [item] = copy.splice(from, 1)
+  copy.splice(to, 0, item)
+  return copy
+}
+
+function onDragStart(item, e) {
+  draggingId.value = item.id
+  dragOverId.value = null
+  dropPos.value = null
+  if (e?.dataTransfer && typeof e.dataTransfer.setData === 'function') {
+    try {
+      e.dataTransfer.effectAllowed = 'move'
+      e.dataTransfer.setData('text/plain', item.id)
+    } catch (err) {
+      void err
+    }
+  }
+}
+function onDragOver(item, e) {
+  e.preventDefault()
+  if (e?.dataTransfer) {
+    try {
+      e.dataTransfer.dropEffect = 'move'
+    } catch (err) {
+      void err
+    }
+  }
+  const rect = e.currentTarget.getBoundingClientRect()
+  const y = e.clientY
+  dropPos.value = y < rect.top + rect.height / 2 ? 'above' : 'below'
+  dragOverId.value = item.id
+}
+function onDragEnter(item, e) {
+  onDragOver(item, e)
+}
+function onDrop(item, e) {
+  e.preventDefault()
+  const fromIdx = indexById(draggingId.value)
+  const overIdx = indexById(item.id)
+  if (fromIdx === -1 || overIdx === -1) return
+
+  let insertIdx = overIdx + (dropPos.value === 'below' ? 1 : 0)
+  if (fromIdx < insertIdx) insertIdx--
+
+  if (fromIdx !== insertIdx) {
+    shortcutsList.value = moveItem(shortcutsList.value, fromIdx, insertIdx)
+  }
+
+  activeIconId.value = draggingId.value
+  draggingId.value = null
+  dragOverId.value = null
+  dropPos.value = null
+}
+function onDragEnd() {
+  draggingId.value = null
+  dragOverId.value = null
+  dropPos.value = null
+}
+
 /* actions */
 function deleteActive() {
   const idx = shortcutsList.value.findIndex((s) => s.id === activeIconId.value)
   if (idx === -1) return (confirmDelete.value = false)
   const nextId = shortcutsList.value[idx + 1]?.id || shortcutsList.value[idx - 1]?.id || null
-  const copy = [...shortcutsList.value]
-  copy.splice(idx, 1)
-  shortcutsList.value = copy
+  shortcutsList.value = shortcutsList.value.filter((_, i) => i !== idx)
   activeIconId.value = nextId
   confirmDelete.value = false
 }
@@ -227,10 +296,8 @@ function deleteActive() {
 
 <template>
   <section class="space-y-3">
-    <!-- Shortcuts Manager header -->
     <h3 class="text-sm font-medium text-slate-200">Shortcuts Manager</h3>
 
-    <!-- Instructions row with Add Icon button -->
     <div class="flex items-center justify-between">
       <p class="text-sm text-slate-400">
         Drag icons in the left column to change order. Click an icon to edit its settings in the
@@ -248,7 +315,7 @@ function deleteActive() {
     </div>
 
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <!-- Left: Icon Order (only this scrolls) -->
+      <!-- Left: Icon Order (draggable list) -->
       <div class="bg-white/5 rounded-md p-4 space-y-2">
         <p class="text-xs uppercase text-slate-400 mb-2">Icon Order</p>
         <div class="flex flex-col gap-2 max-h-[50vh] overflow-y-auto pr-1">
@@ -256,12 +323,31 @@ function deleteActive() {
             v-for="item in shortcutsList"
             :key="item.id"
             type="button"
-            class="flex items-center gap-3 p-2 bg-white/10 rounded cursor-move text-left hover:bg-white/15 focus:outline-none"
-            :class="activeIconId === item.id ? 'ring-2 ring-[#949ba1]' : ''"
+            class="group flex items-center gap-3 p-2 bg-white/10 rounded text-left hover:bg-white/15 focus:outline-none select-none cursor-grab active:cursor-grabbing"
+            :class="[
+              activeIconId === item.id ? 'ring-2 ring-[#949ba1]' : '',
+              draggingId === item.id ? 'opacity-60' : '',
+              dragOverId === item.id && dropPos === 'above'
+                ? 'border-t-2 border-[#949ba1] -mt-[2px]'
+                : '',
+              dragOverId === item.id && dropPos === 'below'
+                ? 'border-b-2 border-[#949ba1] -mb-[2px]'
+                : '',
+            ]"
+            draggable="true"
+            @dragstart="onDragStart(item, $event)"
+            @dragover="onDragOver(item, $event)"
+            @dragenter="onDragEnter(item, $event)"
+            @drop="onDrop(item, $event)"
+            @dragend="onDragEnd"
             @click="activeIconId = item.id"
+            :aria-grabbed="draggingId === item.id ? 'true' : 'false'"
           >
+            <!-- Optional drag handle (off by default) -->
+            <i v-if="showDragHandle" class="fa-solid fa-grip-vertical opacity-60"></i>
+
             <i :class="item.icon + ' text-xl'"></i>
-            <span class="text-slate-200 text-sm truncate">{{ item.label }}</span>
+            <span class="text-slate-200 text-sm truncate flex-1">{{ item.label }}</span>
           </button>
         </div>
       </div>
@@ -333,7 +419,6 @@ function deleteActive() {
           <div class="mt-auto rounded-md border border-white/10 bg-white/5 p-4">
             <p class="text-sm text-slate-200">Delete this icon?</p>
 
-            <!-- Compact row: message + buttons aligned -->
             <div v-if="!confirmDelete" class="mt-1 flex items-center justify-between gap-4">
               <p class="text-[13px] leading-5 text-slate-400 flex-1">
                 This will remove the icon from your shortcuts.
@@ -347,7 +432,6 @@ function deleteActive() {
               </button>
             </div>
 
-            <!-- Confirm state stays inline too -->
             <div v-else class="mt-1 flex items-center justify-between gap-4">
               <p class="text-sm text-slate-200 flex-1">Are you sure?</p>
               <div class="flex gap-2 shrink-0">
@@ -379,5 +463,5 @@ function deleteActive() {
 </template>
 
 <style scoped>
-/* none */
+/* No extra styles; utility classes handle drag visuals. */
 </style>
