@@ -1,3 +1,4 @@
+<!-- src/components/ShortcutSearch.vue -->
 <script setup>
 import { ref, onMounted, computed } from 'vue'
 import ShortcutsSettingsModal from './shortcuts/ShortcutsSettingsModal.vue'
@@ -29,149 +30,231 @@ function urlFor(provider, query) {
   }
 }
 
-/* Map provider -> full option object (so we can read si or icon) */
+/* Map provider -> option (for SI/FA icon) */
 const optionByValue = Object.fromEntries(PROVIDER_OPTIONS.map((o) => [o.value, o]))
 const providerOpt = computed(() => optionByValue[store.provider] || null)
 const providerSi = computed(() => providerOpt.value?.si || null)
 const providerFA = computed(() => providerOpt.value?.icon || null)
 
-/* ===== Shortcuts rail (ordered by store.order when present) ===== */
-const DEFAULT_SHORTCUTS = Object.freeze([
-  {
+/* Registry for all supported shortcuts (same data as manager uses) */
+const REGISTRY = Object.freeze({
+  youtube: {
     id: 'youtube',
     label: 'YouTube',
     icon: 'fa-brands fa-youtube',
     href: 'https://www.youtube.com',
   },
-  { id: 'github', label: 'GitHub', icon: 'fa-brands fa-github', href: 'https://github.com' },
-  { id: 'gmail', label: 'Gmail', icon: 'fa-regular fa-envelope', href: 'https://mail.google.com' },
-  {
+  github: {
+    id: 'github',
+    label: 'GitHub',
+    icon: 'fa-brands fa-github',
+    href: 'https://github.com',
+  },
+  gmail: {
+    id: 'gmail',
+    label: 'Gmail',
+    icon: 'fa-regular fa-envelope',
+    href: 'https://mail.google.com',
+  },
+  gdrive: {
     id: 'gdrive',
     label: 'Google Drive',
     icon: 'fa-brands fa-google-drive',
     href: 'https://drive.google.com',
   },
-  { id: 'chatgpt', label: 'ChatGPT', icon: 'fa-solid fa-robot', href: 'https://chat.openai.com' },
-  { id: 'twitter', label: 'Twitter', icon: 'fa-brands fa-x-twitter', href: 'https://twitter.com' },
-  { id: 'reddit', label: 'Reddit', icon: 'fa-brands fa-reddit-alien', href: 'https://reddit.com' },
-  {
+  chatgpt: {
+    id: 'chatgpt',
+    label: 'ChatGPT',
+    icon: 'fa-solid fa-robot',
+    href: 'https://chat.openai.com',
+  },
+  twitter: {
+    id: 'twitter',
+    label: 'Twitter',
+    icon: 'fa-brands fa-x-twitter',
+    href: 'https://twitter.com',
+  },
+  reddit: {
+    id: 'reddit',
+    label: 'Reddit',
+    icon: 'fa-brands fa-reddit-alien',
+    href: 'https://reddit.com',
+  },
+  linkedin: {
     id: 'linkedin',
     label: 'LinkedIn',
     icon: 'fa-brands fa-linkedin',
     href: 'https://linkedin.com',
   },
-  {
+  steam: {
     id: 'steam',
     label: 'Steam',
     icon: 'fa-brands fa-steam',
     href: 'https://store.steampowered.com',
   },
-  { id: 'spotify', label: 'Spotify', icon: 'fa-brands fa-spotify', href: 'https://spotify.com' },
-  {
+  spotify: {
+    id: 'spotify',
+    label: 'Spotify',
+    icon: 'fa-brands fa-spotify',
+    href: 'https://spotify.com',
+  },
+  facebook: {
     id: 'facebook',
     label: 'Facebook',
     icon: 'fa-brands fa-facebook',
     href: 'https://facebook.com',
   },
-  {
+  instagram: {
     id: 'instagram',
     label: 'Instagram',
     icon: 'fa-brands fa-instagram',
     href: 'https://instagram.com',
   },
-  { id: 'tiktok', label: 'TikTok', icon: 'fa-brands fa-tiktok', href: 'https://tiktok.com' },
-  {
+  tiktok: {
+    id: 'tiktok',
+    label: 'TikTok',
+    icon: 'fa-brands fa-tiktok',
+    href: 'https://tiktok.com',
+  },
+  whatsapp: {
     id: 'whatsapp',
     label: 'WhatsApp',
     icon: 'fa-brands fa-whatsapp',
     href: 'https://whatsapp.com',
   },
-  { id: 'discord', label: 'Discord', icon: 'fa-brands fa-discord', href: 'https://discord.com' },
-  { id: 'amazon', label: 'Amazon', icon: 'fa-brands fa-amazon', href: 'https://amazon.com' },
-  { id: 'netflix', label: 'Netflix', icon: 'fa-solid fa-n', href: 'https://netflix.com' },
-  { id: 'openai', label: 'OpenAI', icon: 'fa-solid fa-brain', href: 'https://openai.com' },
-  {
+  discord: {
+    id: 'discord',
+    label: 'Discord',
+    icon: 'fa-brands fa-discord',
+    href: 'https://discord.com',
+  },
+  amazon: {
+    id: 'amazon',
+    label: 'Amazon',
+    icon: 'fa-brands fa-amazon',
+    href: 'https://amazon.com',
+  },
+  netflix: { id: 'netflix', label: 'Netflix', icon: 'fa-solid fa-n', href: 'https://netflix.com' },
+  openai: { id: 'openai', label: 'OpenAI', icon: 'fa-solid fa-brain', href: 'https://openai.com' },
+  pinterest: {
     id: 'pinterest',
     label: 'Pinterest',
     icon: 'fa-brands fa-pinterest',
     href: 'https://pinterest.com',
   },
-  { id: 'apple', label: 'Apple', icon: 'fa-brands fa-apple', href: 'https://apple.com' },
-  {
+  apple: { id: 'apple', label: 'Apple', icon: 'fa-brands fa-apple', href: 'https://apple.com' },
+  microsoft: {
     id: 'microsoft',
     label: 'Microsoft',
     icon: 'fa-brands fa-microsoft',
     href: 'https://microsoft.com',
   },
-  { id: 'slack', label: 'Slack', icon: 'fa-brands fa-slack', href: 'https://slack.com' },
-  { id: 'asana', label: 'Asana', icon: 'fa-solid fa-diagram-project', href: 'https://asana.com' },
-  { id: 'figma', label: 'Figma', icon: 'fa-brands fa-figma', href: 'https://figma.com' },
-  {
+  slack: { id: 'slack', label: 'Slack', icon: 'fa-brands fa-slack', href: 'https://slack.com' },
+  asana: {
+    id: 'asana',
+    label: 'Asana',
+    icon: 'fa-solid fa-diagram-project',
+    href: 'https://asana.com',
+  },
+  figma: { id: 'figma', label: 'Figma', icon: 'fa-brands fa-figma', href: 'https://figma.com' },
+  dribbble: {
     id: 'dribbble',
     label: 'Dribbble',
     icon: 'fa-brands fa-dribbble',
     href: 'https://dribbble.com',
   },
-  { id: 'behance', label: 'Behance', icon: 'fa-brands fa-behance', href: 'https://behance.net' },
-  { id: 'trello', label: 'Trello', icon: 'fa-brands fa-trello', href: 'https://trello.com' },
-  { id: 'notion', label: 'Notion', icon: 'fa-regular fa-file-lines', href: 'https://notion.so' },
-  { id: 'medium', label: 'Medium', icon: 'fa-brands fa-medium', href: 'https://medium.com' },
-  {
+  behance: {
+    id: 'behance',
+    label: 'Behance',
+    icon: 'fa-brands fa-behance',
+    href: 'https://behance.net',
+  },
+  trello: {
+    id: 'trello',
+    label: 'Trello',
+    icon: 'fa-brands fa-trello',
+    href: 'https://trello.com',
+  },
+  notion: {
+    id: 'notion',
+    label: 'Notion',
+    icon: 'fa-regular fa-file-lines',
+    href: 'https://notion.so',
+  },
+  medium: {
+    id: 'medium',
+    label: 'Medium',
+    icon: 'fa-brands fa-medium',
+    href: 'https://medium.com',
+  },
+  hn: {
     id: 'hn',
     label: 'Hacker News',
     icon: 'fa-solid fa-newspaper',
     href: 'https://news.ycombinator.com',
   },
-  { id: 'bbc', label: 'BBC', icon: 'fa-solid fa-globe', href: 'https://bbc.com' },
-  { id: 'cnn', label: 'CNN', icon: 'fa-solid fa-tv', href: 'https://cnn.com' },
-  { id: 'nyt', label: 'NY Times', icon: 'fa-regular fa-newspaper', href: 'https://nytimes.com' },
-  {
+  bbc: { id: 'bbc', label: 'BBC', icon: 'fa-solid fa-globe', href: 'https://bbc.com' },
+  cnn: { id: 'cnn', label: 'CNN', icon: 'fa-solid fa-tv', href: 'https://cnn.com' },
+  nyt: {
+    id: 'nyt',
+    label: 'NY Times',
+    icon: 'fa-regular fa-newspaper',
+    href: 'https://nytimes.com',
+  },
+  wapo: {
     id: 'wapo',
     label: 'Washington Post',
     icon: 'fa-solid fa-scroll',
     href: 'https://washingtonpost.com',
   },
-  {
+  bloomberg: {
     id: 'bloomberg',
     label: 'Bloomberg',
     icon: 'fa-solid fa-chart-line',
     href: 'https://bloomberg.com',
   },
-  { id: 'crypto', label: 'Crypto', icon: 'fa-solid fa-coins', href: 'https://coinmarketcap.com' },
-  { id: 'weather', label: 'Weather', icon: 'fa-solid fa-cloud-sun', href: 'https://weather.com' },
-  {
+  crypto: {
+    id: 'crypto',
+    label: 'Crypto',
+    icon: 'fa-solid fa-coins',
+    href: 'https://coinmarketcap.com',
+  },
+  weather: {
+    id: 'weather',
+    label: 'Weather',
+    icon: 'fa-solid fa-cloud-sun',
+    href: 'https://weather.com',
+  },
+  calendar: {
     id: 'calendar',
     label: 'Calendar',
     icon: 'fa-regular fa-calendar',
     href: 'https://calendar.google.com',
   },
-  { id: 'maps', label: 'Maps', icon: 'fa-solid fa-map', href: 'https://maps.google.com' },
-  { id: 'photos', label: 'Photos', icon: 'fa-regular fa-image', href: 'https://photos.google.com' },
-])
+  maps: { id: 'maps', label: 'Maps', icon: 'fa-solid fa-map', href: 'https://maps.google.com' },
+  photos: {
+    id: 'photos',
+    label: 'Photos',
+    icon: 'fa-regular fa-image',
+    href: 'https://photos.google.com',
+  },
+})
 
-const idToDefault = new Map(DEFAULT_SHORTCUTS.map((s) => [s.id, s]))
-
+/**
+ * IMPORTANT CHANGE:
+ * - If there is a saved order, render ONLY those ids (mapped through REGISTRY).
+ * - Do NOT append any missing defaults. This makes deletions persist visually.
+ * - If there is NO saved order yet, fall back to initial full list (all registry ids).
+ */
 const orderedShortcuts = computed(() => {
   const ord = Array.isArray(store.order) ? store.order : null
-  if (!ord || ord.length === 0) return DEFAULT_SHORTCUTS
 
-  const out = []
-  const seen = new Set()
-
-  // First: items that appear in stored order and exist in defaults
-  for (const id of ord) {
-    const item = idToDefault.get(id)
-    if (item && !seen.has(id)) {
-      out.push(item)
-      seen.add(id)
-    }
+  if (ord && ord.length) {
+    return ord.map((id) => REGISTRY[id]).filter(Boolean) // ignore unknown ids
   }
 
-  // Then: any remaining defaults not present in store.order (append)
-  for (const item of DEFAULT_SHORTCUTS) {
-    if (!seen.has(item.id)) out.push(item)
-  }
-  return out
+  // First run: no saved order yet → show all defaults in the registry order
+  return Object.values(REGISTRY)
 })
 
 async function onSubmit() {
@@ -197,16 +280,16 @@ async function onSubmit() {
         <a
           v-for="item in orderedShortcuts"
           :key="item.id"
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
+          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition w-12 min-w-[3rem] justify-center"
           :href="item.href"
           :title="item.label"
         >
           <i :class="item.icon"></i>
         </a>
 
-        <!-- Gear opens settings modal (not part of the ordering) -->
+        <!-- Gear opens settings modal (fixed at the end; unchanged) -->
         <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
+          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition w-12 min-w-[3rem] justify-center"
           href="#"
           title="Settings"
           @click.prevent="isSettingsOpen = true"
@@ -225,7 +308,6 @@ async function onSubmit() {
           <span
             class="absolute left-3 top-1/2 -translate-y-1/2 opacity-90 text-slate-200 w-5 h-5 flex items-center justify-center"
           >
-            <!-- Prefer Simple Icons if present; otherwise use FA class from store; otherwise fallback -->
             <SiIcon v-if="providerSi" :name="providerSi" class="w-5 h-5" aria-hidden="true" />
             <i
               v-else-if="providerFA"
