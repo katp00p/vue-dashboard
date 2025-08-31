@@ -11,9 +11,7 @@ onMounted(() => store.hydrate())
 const q = ref('')
 const isSettingsOpen = ref(false)
 
-function enc(s) {
-  return encodeURIComponent(s)
-}
+const enc = (s) => encodeURIComponent(s)
 
 function urlFor(provider, query) {
   switch (provider) {
@@ -91,13 +89,14 @@ async function onSubmit() {
             aria-hidden="true"
             title="Divider"
           />
-          <!-- Normal icon -->
+          <!-- Clickable icon (opens in new tab) -->
           <a
-            v-else
+            v-else-if="item.href"
             class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-            :href="item.href || '#'"
+            :href="item.href"
+            target="_blank"
+            rel="noopener noreferrer"
             :title="item.label || item.id"
-            @click.prevent="!item.href || item.href === '#' ? null : undefined"
           >
             <i v-if="item.icon" :class="item.icon"></i>
             <img
@@ -109,26 +108,30 @@ async function onSubmit() {
             />
             <i v-else class="fa-regular fa-circle"></i>
           </a>
+          <!-- Non-clickable slot if no href -->
+          <span
+            v-else
+            class="shortcut text-white text-4xl inline-flex items-center justify-center h-12 w-12 opacity-60 cursor-not-allowed"
+            :title="item.label || item.id"
+          >
+            <i v-if="item.icon" :class="item.icon"></i>
+            <i v-else class="fa-regular fa-circle"></i>
+          </span>
         </template>
       </div>
 
       <!-- Spacer pushes gear to right edge -->
       <div class="flex-1"></div>
 
-      <!-- Settings gear (fixed at right). Force color on the anchor so FA SVG/webfont inherit it -->
+      <!-- Settings gear (fixed at right) -->
       <a
         class="shrink-0 inline-flex items-center justify-center h-12 w-12"
         href="#"
         title="Settings"
         aria-label="Settings"
         @click.prevent="isSettingsOpen = true"
-        style="
-          color: #3b4551 !important;
-          --fa-primary-color: #3b4551;
-          --fa-secondary-color: #3b4551;
-        "
       >
-        <i class="fa-solid fa-gear text-[20px] leading-none"></i>
+        <i class="fa-solid fa-gear text-[20px] leading-none" style="color: #3b4551"></i>
       </a>
 
       <!-- Right: Unified Search -->
