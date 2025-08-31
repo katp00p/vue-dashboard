@@ -34,6 +34,10 @@ const todayHi = computed(() => (props.daily.length ? `${round(props.daily[0].tMa
 const todayLo = computed(() => (props.daily.length ? `${round(props.daily[0].tMin)}°` : '—'))
 const week1 = computed(() => props.daily.slice(0, 7))
 const week2 = computed(() => props.daily.slice(7, 14))
+
+// End-of-day markers
+const isEndOfDay = (ts) => new Date(ts).getHours() === 23 // 11 PM
+const isMidnight = (ts) => new Date(ts).getHours() === 0 // 12 AM
 </script>
 
 <template>
@@ -132,8 +136,9 @@ const week2 = computed(() => props.daily.slice(7, 14))
               <!-- HOURLY -->
               <section class="mb-6">
                 <p class="text-slate-400 text-[10px] uppercase tracking-wide mb-2">Next 48 hours</p>
+
                 <div class="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
-                  <!-- header (add pr to match scrollbar width) -->
+                  <!-- header (pad-right to match scrollbar gutter) -->
                   <div
                     class="flex items-center px-3 pr-[20px] py-1 text-[11px] text-slate-400 bg-white/5 leading-3 whitespace-nowrap"
                   >
@@ -144,7 +149,6 @@ const week2 = computed(() => props.daily.slice(7, 14))
                     <div class="w-[56px] text-center">Feels</div>
                     <div class="w-[48px] text-center">💧%</div>
                     <div class="w-[44px] text-center">mm</div>
-                    <!-- 🔁 swapped order: RH% before Wind -->
                     <div class="w-[44px] text-center">RH%</div>
                     <div class="w-[128px] text-center">Wind</div>
                   </div>
@@ -154,7 +158,11 @@ const week2 = computed(() => props.daily.slice(7, 14))
                     <div
                       v-for="h in next48"
                       :key="h.time"
-                      class="flex items-center px-3 py-2 text-sm leading-4 whitespace-nowrap tabular-nums"
+                      :class="[
+                        'flex items-center px-3 py-2 text-sm leading-4 whitespace-nowrap tabular-nums',
+                        isEndOfDay(h.time) ? 'border-b border-white' : '',
+                        isMidnight(h.time) ? 'border-t-0' : '',
+                      ]"
                       :aria-label="`${fmtTime(h.time)}: ${codeToText(h.code)}, ${Math.round(h.temp ?? 0)}°C, feels ${Math.round(h.feels ?? 0)}°C, precip ${h.pprob ?? 0}%, amount ${(h.pamt ?? 0).toFixed(1)} mm, RH ${Math.round(h.rh ?? 0)}%, wind ${Math.round(h.ws ?? 0)} km/h gust ${Math.round(h.wg ?? 0)} km/h from ${h.wd != null ? degToCompass(h.wd) : '—'}`"
                     >
                       <div class="w-[64px] text-slate-300">{{ fmtTime(h.time) }}</div>
@@ -182,13 +190,9 @@ const week2 = computed(() => props.daily.slice(7, 14))
                       <div class="w-[44px] flex justify-center text-slate-300">
                         {{ h.pamt != null ? h.pamt.toFixed(1) : '—' }}
                       </div>
-
-                      <!-- 🔁 RH% before Wind -->
                       <div class="w-[44px] flex justify-center text-slate-300">
                         {{ h.rh != null ? Math.round(h.rh) : '—' }}
                       </div>
-
-                      <!-- Wind last -->
                       <div class="w-[128px] flex justify-center text-slate-300">
                         <span class="text-slate-100">{{
                           h.ws != null ? Math.round(h.ws) : '—'
