@@ -112,17 +112,21 @@ async function onSubmit() {
         </template>
       </div>
 
-      <!-- Spacer BEFORE gear to push it to the right edge -->
+      <!-- Spacer pushes gear to right edge -->
       <div class="flex-1"></div>
 
-      <!-- Gear (fixed at right, forced color) -->
+      <!-- Settings gear (fixed at right). Force color on the anchor so FA SVG/webfont inherit it -->
       <a
         class="shrink-0 inline-flex items-center justify-center h-12 w-12"
         href="#"
         title="Settings"
         aria-label="Settings"
         @click.prevent="isSettingsOpen = true"
-        style="color: #88929b !important"
+        style="
+          color: #3b4551 !important;
+          --fa-primary-color: #3b4551;
+          --fa-secondary-color: #3b4551;
+        "
       >
         <i class="fa-solid fa-gear text-[20px] leading-none"></i>
       </a>

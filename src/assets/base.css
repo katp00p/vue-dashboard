@@ -13,20 +13,18 @@
 
   .glass {
     position: relative;
-    background: rgba(65, 82, 98, 0.50);
+    background: rgba(65, 82, 98, 0.5);
     border: 1px solid rgba(59, 135, 168, 0.25);
     backdrop-filter: blur(10px);
   }
 
   .glass::before {
-    content: "";
+    content: '';
     pointer-events: none;
     position: absolute;
     inset: 0;
     border-radius: inherit;
-    background: linear-gradient(to bottom,
-        rgba(255, 255, 255, 0.05),
-        rgba(255, 255, 255, 0.00));
+    background: linear-gradient(to bottom, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0));
   }
 
   .list-dot li {
@@ -41,13 +39,13 @@
     background: linear-gradient(135deg, #3b87a8, #6db187);
     border-radius: 50%;
     position: absolute;
-    left: .5rem;
-    top: .7rem;
-    opacity: .9;
+    left: 0.5rem;
+    top: 0.7rem;
+    opacity: 0.9;
   }
 
   .card-title {
-    letter-spacing: .02em;
+    letter-spacing: 0.02em;
   }
 
   #shortcuts .shortcut {
@@ -64,14 +62,13 @@
   }
 
   :root {
-    --hint: rgba(255, 255, 255, .55);
-    --ring: rgba(59, 135, 168, .40);
+    --hint: rgba(255, 255, 255, 0.55);
+    --ring: rgba(59, 135, 168, 0.4);
   }
 
   .scrollbar {
     scrollbar-width: thin;
-    scrollbar-color: var(--scroll-thumb, rgba(255, 255, 255, 0.40))
-      var(--scroll-track, transparent);
+    scrollbar-color: var(--scroll-thumb, rgba(255, 255, 255, 0.4)) var(--scroll-track, transparent);
   }
 
   .scrollbar::-webkit-scrollbar {
@@ -84,30 +81,32 @@
   }
 
   .scrollbar::-webkit-scrollbar-thumb {
-    background: var(--scroll-gradient, var(--scroll-thumb, rgba(255, 255, 255, 0.30)));
+    background: var(--scroll-gradient, var(--scroll-thumb, rgba(255, 255, 255, 0.3)));
     border-radius: var(--scrollbar-radius, 10px);
-    border: var(--scrollbar-border-width, 2px)
-      solid var(--scroll-thumb-border, rgba(255, 255, 255, 0.12));
+    border: var(--scrollbar-border-width, 2px) solid
+      var(--scroll-thumb-border, rgba(255, 255, 255, 0.12));
     box-shadow: 0 1px 4px rgba(0, 0, 0, 0.25) inset;
   }
 
   .scrollbar::-webkit-scrollbar-thumb:hover {
-    background: var(--scroll-gradient-hover, var(--scroll-thumb-hover, rgba(255, 255, 255, 0.40)));
+    background: var(--scroll-gradient-hover, var(--scroll-thumb-hover, rgba(255, 255, 255, 0.4)));
     border-color: var(--scroll-thumb-border-hover, rgba(255, 255, 255, 0.18));
   }
 
   .scrollbar--accent {
     --scroll-gradient: linear-gradient(180deg, var(--accent), var(--accent-2));
-    --scroll-gradient: linear-gradient(180deg,
-        color-mix(in srgb, var(--accent) 85%, transparent),
-        color-mix(in srgb, var(--accent-2) 85%, transparent));
+    --scroll-gradient: linear-gradient(
+      180deg,
+      color-mix(in srgb, var(--accent) 85%, transparent),
+      color-mix(in srgb, var(--accent-2) 85%, transparent)
+    );
     --scroll-thumb-border: rgba(0, 0, 0, 0.25);
     --scroll-thumb-border-hover: rgba(0, 0, 0, 0.35);
   }
 
   .scrollbar--neutral {
-    --scroll-thumb: rgba(255, 255, 255, 0.30);
-    --scroll-thumb-hover: rgba(255, 255, 255, 0.40);
+    --scroll-thumb: rgba(255, 255, 255, 0.3);
+    --scroll-thumb-hover: rgba(255, 255, 255, 0.4);
     --scroll-thumb-border: rgba(255, 255, 255, 0.12);
     --scroll-thumb-border-hover: rgba(255, 255, 255, 0.18);
   }
@@ -118,11 +117,11 @@
 
   .num {
     font-variant-numeric: tabular-nums;
-    font-feature-settings: "tnum";
+    font-feature-settings: 'tnum';
   }
 
-  #shortcuts i {
-    color: #fff !important;
-    text-shadow: none !important;
+  #shortcuts .shortcuts-rail a.shortcut > i {
+    color: #fff;
+    text-shadow: none;
   }
 }
