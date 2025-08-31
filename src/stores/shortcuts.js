@@ -14,9 +14,11 @@ import { defineStore } from 'pinia'
 export const PROVIDER_OPTIONS = [
   { value: 'Google', label: 'Google', si: 'google' },
   { value: 'DuckDuckGo', label: 'DuckDuckGo', si: 'duckduckgo' },
-  { value: 'Bing', label: 'Bing', si: 'bing' },
+  // Use FA for Bing; no 'si' so FA is chosen in both the modal + search box
+  { value: 'Bing', label: 'Bing', icon: 'fa-solid fa-b' },
   { value: 'Perplexity', label: 'Perplexity', si: 'perplexity' },
 ]
+
 const ALLOWED_PROVIDERS = new Set(PROVIDER_OPTIONS.map((o) => o.value))
 const STORAGE_KEY = 'shortcuts.settings.v1'
 
