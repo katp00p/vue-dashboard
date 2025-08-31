@@ -1,7 +1,8 @@
 <!-- src/components/shortcuts/ShortcutsManager.vue -->
 <script setup>
-import { ref, computed } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { Switch } from '@headlessui/vue'
+import { useShortcutsStore } from '@/stores/shortcuts'
 
 /**
  * Optional props:
@@ -13,6 +14,10 @@ const props = defineProps({
   showDragHandle: { type: Boolean, default: false },
 })
 const emit = defineEmits(['update:shortcuts'])
+
+/* Pinia store for persisting order */
+const store = useShortcutsStore()
+onMounted(() => store.hydrate())
 
 /* Local list (falls back to internal defaults) */
 const internalShortcuts = ref(
@@ -214,6 +219,16 @@ const activeIcon = computed(
 const activeIconActive = ref(true)
 const confirmDelete = ref(false)
 
+/* Persist current order to store */
+function persistOrder() {
+  try {
+    const ids = shortcutsList.value.map((s) => s.id)
+    store.setOrder(ids)
+  } catch (err) {
+    void err
+  }
+}
+
 /* ---------------- Drag & Drop state/logic (native HTML5) ---------------- */
 const draggingId = ref(null)
 const dragOverId = ref(null)
@@ -270,6 +285,7 @@ function onDrop(item, e) {
 
   if (fromIdx !== insertIdx) {
     shortcutsList.value = moveItem(shortcutsList.value, fromIdx, insertIdx)
+    persistOrder() // <-- save to store
   }
 
   activeIconId.value = draggingId.value
@@ -291,6 +307,7 @@ function deleteActive() {
   shortcutsList.value = shortcutsList.value.filter((_, i) => i !== idx)
   activeIconId.value = nextId
   confirmDelete.value = false
+  persistOrder() // keep store in sync when list changes
 }
 </script>
 

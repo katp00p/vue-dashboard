@@ -16,19 +16,44 @@ export const PROVIDER_OPTIONS = [
 const ALLOWED_PROVIDERS = new Set(PROVIDER_OPTIONS.map((o) => o.value))
 const STORAGE_KEY = 'shortcuts.settings.v1'
 
+// You can keep `order` as null until user customizes it. Later, parent can
+// use this to arrange the rail (if null, use your default order).
 const DEFAULTS = {
   provider: 'Google',
   openMode: 'current', // 'current' | 'new'
+  order: null, // string[] | null
 }
 
 // --- helpers ---------------------------------------------------------------
+
+function isNonEmptyString(v) {
+  return typeof v === 'string' && v.trim().length > 0
+}
+
+function sanitizeOrder(input) {
+  if (!Array.isArray(input)) return DEFAULTS.order
+  // unique, non-empty strings, trimmed; cap to something sane
+  const seen = new Set()
+  const out = []
+  for (const v of input) {
+    if (!isNonEmptyString(v)) continue
+    const id = v.trim()
+    if (seen.has(id)) continue
+    seen.add(id)
+    out.push(id)
+    if (out.length >= 256) break
+  }
+  return out.length ? out : DEFAULTS.order
+}
 
 function sanitizeSnapshot(snapshot) {
   const provider = ALLOWED_PROVIDERS.has(snapshot?.provider) ? snapshot.provider : DEFAULTS.provider
 
   const openMode = snapshot?.openMode === 'new' ? 'new' : DEFAULTS.openMode
 
-  return { provider, openMode }
+  const order = sanitizeOrder(snapshot?.order)
+
+  return { provider, openMode, order }
 }
 
 function safeLoad() {
@@ -83,6 +108,11 @@ export const useShortcutsStore = defineStore('shortcuts', {
     },
     setOpenMode(v) {
       this.openMode = v === 'new' ? 'new' : DEFAULTS.openMode
+      safeSave(this.$state ?? this)
+    },
+    // NEW: save custom icon order (array of ids)
+    setOrder(arr) {
+      this.order = sanitizeOrder(arr)
       safeSave(this.$state ?? this)
     },
     reset() {

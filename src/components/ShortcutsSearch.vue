@@ -35,6 +35,145 @@ const providerOpt = computed(() => optionByValue[store.provider] || null)
 const providerSi = computed(() => providerOpt.value?.si || null)
 const providerFA = computed(() => providerOpt.value?.icon || null)
 
+/* ===== Shortcuts rail (ordered by store.order when present) ===== */
+const DEFAULT_SHORTCUTS = Object.freeze([
+  {
+    id: 'youtube',
+    label: 'YouTube',
+    icon: 'fa-brands fa-youtube',
+    href: 'https://www.youtube.com',
+  },
+  { id: 'github', label: 'GitHub', icon: 'fa-brands fa-github', href: 'https://github.com' },
+  { id: 'gmail', label: 'Gmail', icon: 'fa-regular fa-envelope', href: 'https://mail.google.com' },
+  {
+    id: 'gdrive',
+    label: 'Google Drive',
+    icon: 'fa-brands fa-google-drive',
+    href: 'https://drive.google.com',
+  },
+  { id: 'chatgpt', label: 'ChatGPT', icon: 'fa-solid fa-robot', href: 'https://chat.openai.com' },
+  { id: 'twitter', label: 'Twitter', icon: 'fa-brands fa-x-twitter', href: 'https://twitter.com' },
+  { id: 'reddit', label: 'Reddit', icon: 'fa-brands fa-reddit-alien', href: 'https://reddit.com' },
+  {
+    id: 'linkedin',
+    label: 'LinkedIn',
+    icon: 'fa-brands fa-linkedin',
+    href: 'https://linkedin.com',
+  },
+  {
+    id: 'steam',
+    label: 'Steam',
+    icon: 'fa-brands fa-steam',
+    href: 'https://store.steampowered.com',
+  },
+  { id: 'spotify', label: 'Spotify', icon: 'fa-brands fa-spotify', href: 'https://spotify.com' },
+  {
+    id: 'facebook',
+    label: 'Facebook',
+    icon: 'fa-brands fa-facebook',
+    href: 'https://facebook.com',
+  },
+  {
+    id: 'instagram',
+    label: 'Instagram',
+    icon: 'fa-brands fa-instagram',
+    href: 'https://instagram.com',
+  },
+  { id: 'tiktok', label: 'TikTok', icon: 'fa-brands fa-tiktok', href: 'https://tiktok.com' },
+  {
+    id: 'whatsapp',
+    label: 'WhatsApp',
+    icon: 'fa-brands fa-whatsapp',
+    href: 'https://whatsapp.com',
+  },
+  { id: 'discord', label: 'Discord', icon: 'fa-brands fa-discord', href: 'https://discord.com' },
+  { id: 'amazon', label: 'Amazon', icon: 'fa-brands fa-amazon', href: 'https://amazon.com' },
+  { id: 'netflix', label: 'Netflix', icon: 'fa-solid fa-n', href: 'https://netflix.com' },
+  { id: 'openai', label: 'OpenAI', icon: 'fa-solid fa-brain', href: 'https://openai.com' },
+  {
+    id: 'pinterest',
+    label: 'Pinterest',
+    icon: 'fa-brands fa-pinterest',
+    href: 'https://pinterest.com',
+  },
+  { id: 'apple', label: 'Apple', icon: 'fa-brands fa-apple', href: 'https://apple.com' },
+  {
+    id: 'microsoft',
+    label: 'Microsoft',
+    icon: 'fa-brands fa-microsoft',
+    href: 'https://microsoft.com',
+  },
+  { id: 'slack', label: 'Slack', icon: 'fa-brands fa-slack', href: 'https://slack.com' },
+  { id: 'asana', label: 'Asana', icon: 'fa-solid fa-diagram-project', href: 'https://asana.com' },
+  { id: 'figma', label: 'Figma', icon: 'fa-brands fa-figma', href: 'https://figma.com' },
+  {
+    id: 'dribbble',
+    label: 'Dribbble',
+    icon: 'fa-brands fa-dribbble',
+    href: 'https://dribbble.com',
+  },
+  { id: 'behance', label: 'Behance', icon: 'fa-brands fa-behance', href: 'https://behance.net' },
+  { id: 'trello', label: 'Trello', icon: 'fa-brands fa-trello', href: 'https://trello.com' },
+  { id: 'notion', label: 'Notion', icon: 'fa-regular fa-file-lines', href: 'https://notion.so' },
+  { id: 'medium', label: 'Medium', icon: 'fa-brands fa-medium', href: 'https://medium.com' },
+  {
+    id: 'hn',
+    label: 'Hacker News',
+    icon: 'fa-solid fa-newspaper',
+    href: 'https://news.ycombinator.com',
+  },
+  { id: 'bbc', label: 'BBC', icon: 'fa-solid fa-globe', href: 'https://bbc.com' },
+  { id: 'cnn', label: 'CNN', icon: 'fa-solid fa-tv', href: 'https://cnn.com' },
+  { id: 'nyt', label: 'NY Times', icon: 'fa-regular fa-newspaper', href: 'https://nytimes.com' },
+  {
+    id: 'wapo',
+    label: 'Washington Post',
+    icon: 'fa-solid fa-scroll',
+    href: 'https://washingtonpost.com',
+  },
+  {
+    id: 'bloomberg',
+    label: 'Bloomberg',
+    icon: 'fa-solid fa-chart-line',
+    href: 'https://bloomberg.com',
+  },
+  { id: 'crypto', label: 'Crypto', icon: 'fa-solid fa-coins', href: 'https://coinmarketcap.com' },
+  { id: 'weather', label: 'Weather', icon: 'fa-solid fa-cloud-sun', href: 'https://weather.com' },
+  {
+    id: 'calendar',
+    label: 'Calendar',
+    icon: 'fa-regular fa-calendar',
+    href: 'https://calendar.google.com',
+  },
+  { id: 'maps', label: 'Maps', icon: 'fa-solid fa-map', href: 'https://maps.google.com' },
+  { id: 'photos', label: 'Photos', icon: 'fa-regular fa-image', href: 'https://photos.google.com' },
+])
+
+const idToDefault = new Map(DEFAULT_SHORTCUTS.map((s) => [s.id, s]))
+
+const orderedShortcuts = computed(() => {
+  const ord = Array.isArray(store.order) ? store.order : null
+  if (!ord || ord.length === 0) return DEFAULT_SHORTCUTS
+
+  const out = []
+  const seen = new Set()
+
+  // First: items that appear in stored order and exist in defaults
+  for (const id of ord) {
+    const item = idToDefault.get(id)
+    if (item && !seen.has(id)) {
+      out.push(item)
+      seen.add(id)
+    }
+  }
+
+  // Then: any remaining defaults not present in store.order (append)
+  for (const item of DEFAULT_SHORTCUTS) {
+    if (!seen.has(item.id)) out.push(item)
+  }
+  return out
+})
+
 async function onSubmit() {
   const text = q.value.trim()
   if (!text) return
@@ -56,246 +195,16 @@ async function onSubmit() {
         class="shortcuts-rail flex items-center gap-3 flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain h-12 [&>a]:inline-flex [&>a]:items-center [&>a]:justify-center [&>a]:leading-none [&>a]:h-12 [&>a>i]:block [&>a>i]:leading-none"
       >
         <a
+          v-for="item in orderedShortcuts"
+          :key="item.id"
           class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://www.youtube.com"
-          title="YouTube"
-          ><i class="fa-brands fa-youtube"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://github.com"
-          title="GitHub"
-          ><i class="fa-brands fa-github"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://mail.google.com"
-          title="Gmail"
-          ><i class="fa-regular fa-envelope"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://drive.google.com"
-          title="Google Drive"
-          ><i class="fa-brands fa-google-drive"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://chat.openai.com"
-          title="ChatGPT"
-          ><i class="fa-solid fa-robot"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://twitter.com"
-          title="Twitter"
-          ><i class="fa-brands fa-x-twitter"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://reddit.com"
-          title="Reddit"
-          ><i class="fa-brands fa-reddit-alien"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://linkedin.com"
-          title="LinkedIn"
-          ><i class="fa-brands fa-linkedin"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://store.steampowered.com"
-          title="Steam"
-          ><i class="fa-brands fa-steam"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://spotify.com"
-          title="Spotify"
-          ><i class="fa-brands fa-spotify"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://facebook.com"
-          title="Facebook"
-          ><i class="fa-brands fa-facebook"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://instagram.com"
-          title="Instagram"
-          ><i class="fa-brands fa-instagram"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://tiktok.com"
-          title="TikTok"
-          ><i class="fa-brands fa-tiktok"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://whatsapp.com"
-          title="WhatsApp"
-          ><i class="fa-brands fa-whatsapp"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://discord.com"
-          title="Discord"
-          ><i class="fa-brands fa-discord"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://amazon.com"
-          title="Amazon"
-          ><i class="fa-brands fa-amazon"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://netflix.com"
-          title="Netflix"
-          ><i class="fa-solid fa-n"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://openai.com"
-          title="OpenAI"
-          ><i class="fa-solid fa-brain"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://pinterest.com"
-          title="Pinterest"
-          ><i class="fa-brands fa-pinterest"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://apple.com"
-          title="Apple"
-          ><i class="fa-brands fa-apple"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://microsoft.com"
-          title="Microsoft"
-          ><i class="fa-brands fa-microsoft"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://slack.com"
-          title="Slack"
-          ><i class="fa-brands fa-slack"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://asana.com"
-          title="Asana"
-          ><i class="fa-solid fa-diagram-project"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://figma.com"
-          title="Figma"
-          ><i class="fa-brands fa-figma"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://dribbble.com"
-          title="Dribbble"
-          ><i class="fa-brands fa-dribbble"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://behance.net"
-          title="Behance"
-          ><i class="fa-brands fa-behance"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://trello.com"
-          title="Trello"
-          ><i class="fa-brands fa-trello"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://notion.so"
-          title="Notion"
-          ><i class="fa-regular fa-file-lines"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://medium.com"
-          title="Medium"
-          ><i class="fa-brands fa-medium"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://news.ycombinator.com"
-          title="Hacker News"
-          ><i class="fa-solid fa-newspaper"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://bbc.com"
-          title="BBC"
-          ><i class="fa-solid fa-globe"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://cnn.com"
-          title="CNN"
-          ><i class="fa-solid fa-tv"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://nytimes.com"
-          title="NY Times"
-          ><i class="fa-regular fa-newspaper"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://washingtonpost.com"
-          title="Washington Post"
-          ><i class="fa-solid fa-scroll"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://bloomberg.com"
-          title="Bloomberg"
-          ><i class="fa-solid fa-chart-line"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://coinmarketcap.com"
-          title="Crypto"
-          ><i class="fa-solid fa-coins"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://weather.com"
-          title="Weather"
-          ><i class="fa-solid fa-cloud-sun"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://calendar.google.com"
-          title="Calendar"
-          ><i class="fa-regular fa-calendar"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://maps.google.com"
-          title="Maps"
-          ><i class="fa-solid fa-map"></i
-        ></a>
-        <a
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
-          href="https://photos.google.com"
-          title="Photos"
-          ><i class="fa-regular fa-image"></i
-        ></a>
-        <!-- Gear opens settings modal -->
+          :href="item.href"
+          :title="item.label"
+        >
+          <i :class="item.icon"></i>
+        </a>
+
+        <!-- Gear opens settings modal (not part of the ordering) -->
         <a
           class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
           href="#"
