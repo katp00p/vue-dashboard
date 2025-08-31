@@ -30,21 +30,48 @@ function urlFor(provider, query) {
   }
 }
 
-/* Map provider -> option (for SI/FA icon) */
+/* Provider icon for the search box */
 const optionByValue = Object.fromEntries(PROVIDER_OPTIONS.map((o) => [o.value, o]))
 const providerOpt = computed(() => optionByValue[store.provider] || null)
 const providerSi = computed(() => providerOpt.value?.si || null)
 const providerFA = computed(() => providerOpt.value?.icon || null)
 
-/* Render directly from the store (LocalStorage) */
-const shortcuts = computed(() => (Array.isArray(store.shortcuts) ? store.shortcuts : []))
+/* Shortcuts (icons + dividers) from store */
+const items = computed(() => (Array.isArray(store.shortcuts) ? store.shortcuts : []))
+
+/* Robust divider detection */
+const isDivider = (item) => {
+  if (!item || typeof item !== 'object') return false
+  const id = String(item.id ?? '')
+  if (id.startsWith('divider-')) return true
+  const label = String(item.label ?? '')
+    .trim()
+    .toLowerCase()
+  if (label === 'divider') return true
+  const icon = String(item.icon ?? '')
+  if (icon.includes('fa-grip-lines')) return true
+  return false
+}
+
+function faviconSrc(href) {
+  try {
+    if (!href) return null
+    const host = new URL(href).hostname
+    return host ? `https://www.google.com/s2/favicons?domain=${host}&sz=64` : null
+  } catch {
+    return null
+  }
+}
 
 async function onSubmit() {
   const text = q.value.trim()
   if (!text) return
   const href = urlFor(store.provider, text)
-  if (store.openMode === 'new') window.open(href, '_blank', 'noopener,noreferrer')
-  else window.location.assign(href)
+  if (store.openMode === 'new') {
+    window.open(href, '_blank', 'noopener,noreferrer')
+  } else {
+    window.location.assign(href)
+  }
 }
 </script>
 
@@ -52,39 +79,52 @@ async function onSubmit() {
   <!-- ===== Shortcuts + Search ===== -->
   <section class="mb-4 shrink-0" id="shortcuts">
     <div class="glass rounded-md px-4 py-3 flex items-center gap-4 overflow-hidden">
-      <!-- Scrollable rail (icons only) -->
+      <!-- Rail (scrolls) -->
       <div
         class="shortcuts-rail flex items-center gap-3 flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain h-12 [&>a]:inline-flex [&>a]:items-center [&>a]:justify-center [&>a]:leading-none [&>a]:h-12 [&>a>i]:block [&>a>i]:leading-none"
       >
-        <a
-          v-for="item in shortcuts"
-          :key="item.id"
-          class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition w-12 min-w-[3rem] justify-center"
-          :href="item.href || '#'"
-          :title="item.label || item.id || 'shortcut'"
-        >
-          <!-- Use provided Font Awesome classes if present; otherwise a subtle placeholder -->
-          <i v-if="item.icon" :class="item.icon"></i>
-          <i v-else class="fa-regular fa-circle text-2xl opacity-60"></i>
-        </a>
+        <template v-for="item in items" :key="item.id">
+          <!-- Divider: blank slot same size as an icon -->
+          <span
+            v-if="isDivider(item)"
+            class="shortcut inline-flex items-center justify-center h-12 w-12"
+            aria-hidden="true"
+            title="Divider"
+          />
+          <!-- Normal icon -->
+          <a
+            v-else
+            class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition"
+            :href="item.href || '#'"
+            :title="item.label || item.id"
+            @click.prevent="!item.href || item.href === '#' ? null : undefined"
+          >
+            <i v-if="item.icon" :class="item.icon"></i>
+            <img
+              v-else-if="faviconSrc(item.href)"
+              :src="faviconSrc(item.href)"
+              alt=""
+              class="w-7 h-7 rounded-sm"
+              draggable="false"
+            />
+            <i v-else class="fa-regular fa-circle"></i>
+          </a>
+        </template>
       </div>
 
-      <!-- Spacer -->
+      <!-- Spacer BEFORE gear to push it to the right edge -->
       <div class="flex-1"></div>
 
-      <!-- Gear: smaller, forced color, vertically centered, fixed size -->
+      <!-- Gear (fixed at right, forced color) -->
       <a
-        class="shortcut text-2xl drop-shadow-lg hover:scale-110 transition inline-flex items-center justify-center h-12 w-12 min-w-[3rem]"
+        class="shrink-0 inline-flex items-center justify-center h-12 w-12"
         href="#"
         title="Settings"
+        aria-label="Settings"
         @click.prevent="isSettingsOpen = true"
         style="color: #88929b !important"
       >
-        <i
-          class="fa-solid fa-gear leading-none"
-          aria-hidden="true"
-          style="color: #88929b !important"
-        ></i>
+        <i class="fa-solid fa-gear text-[20px] leading-none"></i>
       </a>
 
       <!-- Right: Unified Search -->

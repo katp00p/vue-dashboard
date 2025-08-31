@@ -69,7 +69,7 @@ function removeItem(id) {
   }
 }
 
-/* ---------- Add Icon ---------- */
+/* ---------- Adders ---------- */
 function uniqueId(base = 'item') {
   const seed = (Date.now().toString(36) + Math.random().toString(36).slice(2, 6)).toLowerCase()
   let id = `${base}${seed}`
@@ -77,14 +77,28 @@ function uniqueId(base = 'item') {
   while (has(id)) id = `${base}${seed}${Math.random().toString(36).slice(2, 4)}`
   return id
 }
+
 function addItem() {
   if (!canAdd.value) return
-  const id = uniqueId()
+  const id = uniqueId('item')
   store.upsertShortcut({
     id,
     label: 'New Shortcut',
     href: '',
     icon: '',
+  })
+  activeId.value = id
+}
+
+function addDivider() {
+  if (!canAdd.value) return
+  const id = uniqueId('divider')
+  // Default a simple visual; user can change in the form
+  store.upsertShortcut({
+    id,
+    label: 'Divider',
+    href: '',
+    icon: 'fa-solid fa-grip-lines',
   })
   activeId.value = id
 }
@@ -138,14 +152,25 @@ function applyChanges() {
 
       <div class="flex items-center gap-3">
         <span class="text-xs text-slate-400">{{ count }} / {{ MAX_SHORTCUTS }}</span>
+
         <button
           type="button"
           :disabled="!canAdd"
           class="px-3 py-2 rounded-md bg-white/10 text-slate-100 border border-white/15 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-sky-400/40 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
-          :title="canAdd ? 'Add a new icon' : 'Maximum of 39 icons reached'"
+          :title="canAdd ? 'Add a new icon' : 'Maximum of 39 items reached'"
           @click="addItem"
         >
           Add Icon
+        </button>
+
+        <button
+          type="button"
+          :disabled="!canAdd"
+          class="px-3 py-2 rounded-md bg-white/10 text-slate-100 border border-white/15 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-sky-400/40 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+          :title="canAdd ? 'Add a divider' : 'Maximum of 39 items reached'"
+          @click="addDivider"
+        >
+          Add Divider
         </button>
       </div>
     </div>
@@ -197,7 +222,7 @@ function applyChanges() {
         </div>
 
         <div v-else class="text-sm text-slate-400 flex items-center justify-center h-24">
-          No shortcuts yet. Click “Add Icon” to create one.
+          No shortcuts yet. Click “Add Icon” or “Add Divider” to create one.
         </div>
       </div>
 
@@ -267,7 +292,7 @@ function applyChanges() {
         </div>
 
         <div v-else class="text-sm text-slate-400 flex-1 flex items-center justify-center">
-          Select an icon from the left to edit its settings.
+          Select an item from the left to edit its settings.
         </div>
       </div>
     </div>
