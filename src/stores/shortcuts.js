@@ -6,11 +6,11 @@ import { defineStore } from 'pinia'
  * All LocalStorage I/O lives here.
  */
 
-// Provider options now: Simple Icons only (no Font Awesome fallback here)
+// Provider options: prefer Simple Icons via `si`, but Bing uses FA fallback icon.
 export const PROVIDER_OPTIONS = [
   { value: 'Google', label: 'Google', si: 'google' },
   { value: 'DuckDuckGo', label: 'DuckDuckGo', si: 'duckduckgo' },
-  { value: 'Bing', label: 'Bing', si: 'bing' },
+  { value: 'Bing', label: 'Bing', icon: 'fa-solid fa-b' }, // FA fallback for Bing
   { value: 'Perplexity', label: 'Perplexity', si: 'perplexity' },
 ]
 const ALLOWED_PROVIDERS = new Set(PROVIDER_OPTIONS.map((o) => o.value))
@@ -24,7 +24,6 @@ const DEFAULTS = {
 // --- helpers ---------------------------------------------------------------
 
 function sanitizeSnapshot(snapshot) {
-  // Make sure we never persist undefined/null/invalid values
   const provider = ALLOWED_PROVIDERS.has(snapshot?.provider) ? snapshot.provider : DEFAULTS.provider
 
   const openMode = snapshot?.openMode === 'new' ? 'new' : DEFAULTS.openMode
@@ -38,7 +37,6 @@ function safeLoad() {
     if (!raw) return { ...DEFAULTS }
 
     const trimmed = String(raw).trim()
-    // Handle legacy or bad writes (e.g., "undefined", "null", empty string)
     if (!trimmed || trimmed === 'undefined' || trimmed === 'null') {
       return { ...DEFAULTS }
     }
@@ -71,8 +69,7 @@ export const useShortcutsStore = defineStore('shortcuts', {
       if (this._hydrated) return
       this._hydrated = true
 
-      // Immediately normalize whatever is currently in storage.
-      // This fixes cases where other code previously wrote "undefined".
+      // Normalize whatever is currently in storage.
       safeSave(this.$state ?? this)
 
       // Persist on any subsequent change
