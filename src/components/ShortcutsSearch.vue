@@ -36,216 +36,8 @@ const providerOpt = computed(() => optionByValue[store.provider] || null)
 const providerSi = computed(() => providerOpt.value?.si || null)
 const providerFA = computed(() => providerOpt.value?.icon || null)
 
-/* Registry for supported shortcuts (same data the manager uses) */
-const REGISTRY = Object.freeze({
-  youtube: {
-    id: 'youtube',
-    label: 'YouTube',
-    icon: 'fa-brands fa-youtube',
-    href: 'https://www.youtube.com',
-  },
-  github: {
-    id: 'github',
-    label: 'GitHub',
-    icon: 'fa-brands fa-github',
-    href: 'https://github.com',
-  },
-  gmail: {
-    id: 'gmail',
-    label: 'Gmail',
-    icon: 'fa-regular fa-envelope',
-    href: 'https://mail.google.com',
-  },
-  gdrive: {
-    id: 'gdrive',
-    label: 'Google Drive',
-    icon: 'fa-brands fa-google-drive',
-    href: 'https://drive.google.com',
-  },
-  chatgpt: {
-    id: 'chatgpt',
-    label: 'ChatGPT',
-    icon: 'fa-solid fa-robot',
-    href: 'https://chat.openai.com',
-  },
-  twitter: {
-    id: 'twitter',
-    label: 'Twitter',
-    icon: 'fa-brands fa-x-twitter',
-    href: 'https://twitter.com',
-  },
-  reddit: {
-    id: 'reddit',
-    label: 'Reddit',
-    icon: 'fa-brands fa-reddit-alien',
-    href: 'https://reddit.com',
-  },
-  linkedin: {
-    id: 'linkedin',
-    label: 'LinkedIn',
-    icon: 'fa-brands fa-linkedin',
-    href: 'https://linkedin.com',
-  },
-  steam: {
-    id: 'steam',
-    label: 'Steam',
-    icon: 'fa-brands fa-steam',
-    href: 'https://store.steampowered.com',
-  },
-  spotify: {
-    id: 'spotify',
-    label: 'Spotify',
-    icon: 'fa-brands fa-spotify',
-    href: 'https://spotify.com',
-  },
-  facebook: {
-    id: 'facebook',
-    label: 'Facebook',
-    icon: 'fa-brands fa-facebook',
-    href: 'https://facebook.com',
-  },
-  instagram: {
-    id: 'instagram',
-    label: 'Instagram',
-    icon: 'fa-brands fa-instagram',
-    href: 'https://instagram.com',
-  },
-  tiktok: {
-    id: 'tiktok',
-    label: 'TikTok',
-    icon: 'fa-brands fa-tiktok',
-    href: 'https://tiktok.com',
-  },
-  whatsapp: {
-    id: 'whatsapp',
-    label: 'WhatsApp',
-    icon: 'fa-brands fa-whatsapp',
-    href: 'https://whatsapp.com',
-  },
-  discord: {
-    id: 'discord',
-    label: 'Discord',
-    icon: 'fa-brands fa-discord',
-    href: 'https://discord.com',
-  },
-  amazon: {
-    id: 'amazon',
-    label: 'Amazon',
-    icon: 'fa-brands fa-amazon',
-    href: 'https://amazon.com',
-  },
-  netflix: { id: 'netflix', label: 'Netflix', icon: 'fa-solid fa-n', href: 'https://netflix.com' },
-  openai: { id: 'openai', label: 'OpenAI', icon: 'fa-solid fa-brain', href: 'https://openai.com' },
-  pinterest: {
-    id: 'pinterest',
-    label: 'Pinterest',
-    icon: 'fa-brands fa-pinterest',
-    href: 'https://pinterest.com',
-  },
-  apple: { id: 'apple', label: 'Apple', icon: 'fa-brands fa-apple', href: 'https://apple.com' },
-  microsoft: {
-    id: 'microsoft',
-    label: 'Microsoft',
-    icon: 'fa-brands fa-microsoft',
-    href: 'https://microsoft.com',
-  },
-  slack: { id: 'slack', label: 'Slack', icon: 'fa-brands fa-slack', href: 'https://slack.com' },
-  asana: {
-    id: 'asana',
-    label: 'Asana',
-    icon: 'fa-solid fa-diagram-project',
-    href: 'https://asana.com',
-  },
-  figma: { id: 'figma', label: 'Figma', icon: 'fa-brands fa-figma', href: 'https://figma.com' },
-  dribbble: {
-    id: 'dribbble',
-    label: 'Dribbble',
-    icon: 'fa-brands fa-dribbble',
-    href: 'https://dribbble.com',
-  },
-  behance: {
-    id: 'behance',
-    label: 'Behance',
-    icon: 'fa-brands fa-behance',
-    href: 'https://behance.net',
-  },
-  trello: {
-    id: 'trello',
-    label: 'Trello',
-    icon: 'fa-brands fa-trello',
-    href: 'https://trello.com',
-  },
-  notion: {
-    id: 'notion',
-    label: 'Notion',
-    icon: 'fa-regular fa-file-lines',
-    href: 'https://notion.so',
-  },
-  medium: {
-    id: 'medium',
-    label: 'Medium',
-    icon: 'fa-brands fa-medium',
-    href: 'https://medium.com',
-  },
-  hn: {
-    id: 'hn',
-    label: 'Hacker News',
-    icon: 'fa-solid fa-newspaper',
-    href: 'https://news.ycombinator.com',
-  },
-  bbc: { id: 'bbc', label: 'BBC', icon: 'fa-solid fa-globe', href: 'https://bbc.com' },
-  cnn: { id: 'cnn', label: 'CNN', icon: 'fa-solid fa-tv', href: 'https://cnn.com' },
-  nyt: {
-    id: 'nyt',
-    label: 'NY Times',
-    icon: 'fa-regular fa-newspaper',
-    href: 'https://nytimes.com',
-  },
-  wapo: {
-    id: 'wapo',
-    label: 'Washington Post',
-    icon: 'fa-solid fa-scroll',
-    href: 'https://washingtonpost.com',
-  },
-  bloomberg: {
-    id: 'bloomberg',
-    label: 'Bloomberg',
-    icon: 'fa-solid fa-chart-line',
-    href: 'https://bloomberg.com',
-  },
-  crypto: {
-    id: 'crypto',
-    label: 'Crypto',
-    icon: 'fa-solid fa-coins',
-    href: 'https://coinmarketcap.com',
-  },
-  weather: {
-    id: 'weather',
-    label: 'Weather',
-    icon: 'fa-solid fa-cloud-sun',
-    href: 'https://weather.com',
-  },
-  calendar: {
-    id: 'calendar',
-    label: 'Calendar',
-    icon: 'fa-regular fa-calendar',
-    href: 'https://calendar.google.com',
-  },
-  maps: { id: 'maps', label: 'Maps', icon: 'fa-solid fa-map', href: 'https://maps.google.com' },
-  photos: {
-    id: 'photos',
-    label: 'Photos',
-    icon: 'fa-regular fa-image',
-    href: 'https://photos.google.com',
-  },
-})
-
-/* Render ONLY what’s saved in the store */
-const orderedShortcuts = computed(() => {
-  const ord = Array.isArray(store.order) ? store.order : null
-  if (ord && ord.length) return ord.map((id) => REGISTRY[id]).filter(Boolean)
-  return Object.values(REGISTRY)
-})
+/* Render directly from the store (LocalStorage) */
+const shortcuts = computed(() => (Array.isArray(store.shortcuts) ? store.shortcuts : []))
 
 async function onSubmit() {
   const text = q.value.trim()
@@ -265,13 +57,15 @@ async function onSubmit() {
         class="shortcuts-rail flex items-center gap-3 flex-nowrap overflow-x-auto overflow-y-hidden overscroll-x-contain h-12 [&>a]:inline-flex [&>a]:items-center [&>a]:justify-center [&>a]:leading-none [&>a]:h-12 [&>a>i]:block [&>a>i]:leading-none"
       >
         <a
-          v-for="item in orderedShortcuts"
+          v-for="item in shortcuts"
           :key="item.id"
           class="shortcut text-white text-4xl drop-shadow-lg hover:scale-110 transition w-12 min-w-[3rem] justify-center"
-          :href="item.href"
-          :title="item.label"
+          :href="item.href || '#'"
+          :title="item.label || item.id || 'shortcut'"
         >
-          <i :class="item.icon"></i>
+          <!-- Use provided Font Awesome classes if present; otherwise a subtle placeholder -->
+          <i v-if="item.icon" :class="item.icon"></i>
+          <i v-else class="fa-regular fa-circle text-2xl opacity-60"></i>
         </a>
       </div>
 

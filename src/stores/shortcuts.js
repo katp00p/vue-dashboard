@@ -2,18 +2,15 @@
 import { defineStore } from 'pinia'
 
 /**
- * Central store for search settings + fully customizable shortcuts.
- * All LocalStorage I/O lives here.
- *
- * STORAGE_KEY shape:
+ * Single source of truth for search settings + fully customizable shortcuts.
+ * LocalStorage schema:
  * {
  *   provider: "Google" | "DuckDuckGo" | "Bing" | "Perplexity",
  *   openMode: "current" | "new",
- *   shortcuts: [{ id, label, icon, href }, ...]   // user-defined, no hardcoded catalog
+ *   shortcuts: [{ id, label, icon, href }, ...]
  * }
  */
 
-// Provider options for the search box (UI uses these for labels/icons)
 export const PROVIDER_OPTIONS = [
   { value: 'Google', label: 'Google', si: 'google' },
   { value: 'DuckDuckGo', label: 'DuckDuckGo', si: 'duckduckgo' },
@@ -25,14 +22,12 @@ const STORAGE_KEY = 'shortcuts.settings.v1'
 
 const DEFAULTS = {
   provider: 'Google',
-  openMode: 'current', // 'current' | 'new'
-  shortcuts: [], // no seeded icons; user controls everything
+  openMode: 'current',
+  shortcuts: [],
 }
 
-/**
- * Normalize a user-provided shortcuts array to a clean, deduped list.
- * Does not inject any site-specific defaults.
- */
+/* ---------- helpers ---------- */
+
 function normalizeShortcuts(input) {
   const out = []
   const seen = new Set()
@@ -45,52 +40,54 @@ function normalizeShortcuts(input) {
     let icon = (raw.icon ?? '').toString().trim()
     let href = (raw.href ?? '').toString().trim()
 
-    // derive id if missing (best-effort slug from label)
     if (!id) {
-      if (label) {
-        id =
-          label
-            .toLowerCase()
-            .replace(/[^a-z0-9]+/g, '')
-            .slice(0, 40) || 'item'
-      } else {
-        continue
-      }
+      if (!label) continue
+      id =
+        label
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '')
+          .slice(0, 40) || 'item'
     }
     if (seen.has(id)) continue
     seen.add(id)
 
     if (!label) label = id
-    // keep icon/href as provided (empty string allowed) — no site-specific defaults here
-
     out.push({ id, label, icon, href })
   }
-
   return out
+}
+
+function isCorruptedRaw(raw) {
+  if (raw == null) return false // missing is handled separately
+  const t = String(raw).trim()
+  if (t === 'undefined' || t === 'null' || t === '') return true
+  return !/^[{\[]/.test(t) // must look like JSON
 }
 
 function safeLoad() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY)
+    if (isCorruptedRaw(raw)) {
+      // self-heal by clearing; hydrate() will re-save a clean state
+      localStorage.removeItem(STORAGE_KEY)
+      return { ...DEFAULTS }
+    }
     if (!raw) return { ...DEFAULTS }
 
     const data = JSON.parse(raw) || {}
     const provider = ALLOWED_PROVIDERS.has(data.provider) ? data.provider : DEFAULTS.provider
     const openMode = data.openMode === 'new' ? 'new' : DEFAULTS.openMode
 
-    // Primary: load user-defined shortcuts array (no hardcoded fill)
     if (Array.isArray(data.shortcuts)) {
       return { provider, openMode, shortcuts: normalizeShortcuts(data.shortcuts) }
     }
 
-    // Legacy migration: if an old `order: string[]` exists, convert to minimal objects
-    // (id + label only). We intentionally DO NOT map to any specific site/icon/href.
+    // Legacy migration: order[] -> minimal objects (no icon/href defaults)
     if (Array.isArray(data.order)) {
       const migrated = data.order
         .map((id) => {
           const cleanId = (id ?? '').toString().trim()
-          if (!cleanId) return null
-          return { id: cleanId, label: cleanId, icon: '', href: '' }
+          return cleanId ? { id: cleanId, label: cleanId, icon: '', href: '' } : null
         })
         .filter(Boolean)
       return { provider, openMode, shortcuts: normalizeShortcuts(migrated) }
@@ -107,23 +104,31 @@ function safeSave(state) {
     const payload = {
       provider: ALLOWED_PROVIDERS.has(state.provider) ? state.provider : DEFAULTS.provider,
       openMode: state.openMode === 'new' ? 'new' : DEFAULTS.openMode,
-      // Persist only the user-defined data; keep it clean
       shortcuts: normalizeShortcuts(state.shortcuts),
     }
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(payload))
+    // Never write the literal "undefined"
+    let json = ''
+    try {
+      json = JSON.stringify(payload) || ''
+    } catch {
+      json = ''
+    }
+    if (!json) json = JSON.stringify({ ...DEFAULTS })
+    localStorage.setItem(STORAGE_KEY, json)
   } catch {
     // ignore write errors (private mode, quota, etc.)
   }
 }
 
+/* ---------- store ---------- */
+
 export const useShortcutsStore = defineStore('shortcuts', {
   state: () => ({
     ...safeLoad(),
-    _hydrated: false, // subscribe once
+    _hydrated: false,
   }),
 
   getters: {
-    // Some parts of the app still expect an `order` (array of ids). Keep it derived.
     order: (state) => state.shortcuts.map((s) => s.id),
   },
 
@@ -131,7 +136,19 @@ export const useShortcutsStore = defineStore('shortcuts', {
     hydrate() {
       if (this._hydrated) return
       this._hydrated = true
-      // Persist on any change
+
+      // Ensure the key exists (or gets repaired) immediately on hydrate
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY)
+        const missing = raw === null
+        const corrupted = isCorruptedRaw(raw)
+        if (missing || corrupted) {
+          if (corrupted) localStorage.removeItem(STORAGE_KEY)
+          safeSave(this.$state)
+        }
+      } catch {}
+
+      // Persist every subsequent change
       this.$subscribe((_mutation, state) => {
         safeSave(state)
       })
@@ -145,11 +162,10 @@ export const useShortcutsStore = defineStore('shortcuts', {
       this.openMode = v === 'new' ? 'new' : DEFAULTS.openMode
     },
 
-    // ---- Shortcuts CRUD ----
+    // Shortcuts CRUD
     setShortcuts(list) {
       this.shortcuts = normalizeShortcuts(list)
     },
-
     upsertShortcut(item) {
       const [clean] = normalizeShortcuts([item])
       if (!clean) return
@@ -157,14 +173,11 @@ export const useShortcutsStore = defineStore('shortcuts', {
       if (idx >= 0) this.shortcuts.splice(idx, 1, clean)
       else this.shortcuts.push(clean)
     },
-
     deleteShortcut(id) {
       const target = (id ?? '').toString().trim()
       if (!target) return
       this.shortcuts = this.shortcuts.filter((s) => s.id !== target)
     },
-
-    // Back-compat: reorder using array of IDs
     setOrder(ids) {
       try {
         const byId = new Map(this.shortcuts.map((s) => [s.id, s]))
@@ -176,7 +189,6 @@ export const useShortcutsStore = defineStore('shortcuts', {
             byId.delete(id)
           }
         }
-        // append leftovers in their current order
         for (const s of this.shortcuts) {
           if (byId.has(s.id)) {
             next.push(s)
@@ -188,13 +200,12 @@ export const useShortcutsStore = defineStore('shortcuts', {
         // ignore
       }
     },
-
     reset() {
-      Object.assign(this, {
-        provider: DEFAULTS.provider,
-        openMode: DEFAULTS.openMode,
-        shortcuts: [],
-      })
+      Object.assign(this, { ...DEFAULTS })
+      // Write immediately so key is present after reset
+      try {
+        safeSave(this.$state)
+      } catch {}
     },
   },
 })
