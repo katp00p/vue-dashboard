@@ -15,7 +15,8 @@ const props = defineProps({
   modelValue: { type: Boolean, default: false },
   current: { type: Object, default: null },
   daily: { type: Array, default: () => [] },
-  next24: { type: Array, default: () => [] },
+  // ✅ use next48 now
+  next48: { type: Array, default: () => [] },
 })
 
 const emit = defineEmits(['update:modelValue'])
@@ -129,7 +130,7 @@ const week2 = computed(() => props.daily.slice(7, 14))
 
               <!-- HOURLY -->
               <section class="mb-6">
-                <p class="text-slate-400 text-[10px] uppercase tracking-wide mb-2">Next 24 hours</p>
+                <p class="text-slate-400 text-[10px] uppercase tracking-wide mb-2">Next 48 hours</p>
                 <div class="rounded-xl border border-white/15 bg-white/5 overflow-hidden">
                   <!-- header -->
                   <div
@@ -146,7 +147,7 @@ const week2 = computed(() => props.daily.slice(7, 14))
                   <!-- rows -->
                   <div class="max-h-48 overflow-y-auto divide-y divide-white/10">
                     <div
-                      v-for="h in next24"
+                      v-for="h in next48"
                       :key="h.time"
                       class="flex items-center px-3 py-2 text-sm leading-4 whitespace-nowrap tabular-nums"
                       :aria-label="`${fmtTime(h.time)}: ${codeToText(h.code)}, ${Math.round(h.temp ?? 0)}°C, precip ${h.pprob ?? 0}%`"
@@ -229,6 +230,7 @@ const week2 = computed(() => props.daily.slice(7, 14))
 </template>
 
 <style scoped>
+/* Lighter scrollbars on dark */
 ::-webkit-scrollbar {
   height: 6px;
   width: 8px;

@@ -5,13 +5,10 @@ import { VueSpinnerOval } from 'vue3-spinners'
 import WeatherDetailsModal from './weather/WeatherDetailsModal.vue'
 import { codeToText, codeToIcon, fmtDay, round } from '../utils/weatherUtils'
 
-console.log('[WeatherWidget] mounted file loaded')
-
-// ==== Location (your coords) ====
 const LAT = 43.764315
 const LON = -79.199
 
-// ==== Modal state ====
+// Modal state
 const isOpen = ref(false)
 function openModal() {
   isOpen.value = true
@@ -23,14 +20,14 @@ function onKeyActivate(e) {
   }
 }
 
-// ==== Reactive state ====
+// Reactive state
 const loading = ref(true)
 const error = ref('')
 const current = ref(null) // { temp, code, isDay, windspeed, winddirection, time }
 const daily = ref([]) // 14 days
-const next24 = ref([]) // next 24 hours list
+const next48 = ref([]) // next 48 hours list
 
-// ==== Derived (widget header) ====
+// Derived (widget header)
 const currentText = computed(() => (current.value ? codeToText(current.value.code) : '—'))
 const currentIcon = computed(() =>
   current.value ? codeToIcon(current.value.code, current.value.isDay) : 'fa-solid fa-cloud',
@@ -39,7 +36,7 @@ const currentTemp = computed(() => (current.value ? `${round(current.value.temp)
 const todayHi = computed(() => (daily.value.length ? `${round(daily.value[0].tMax)}°` : '—'))
 const todayLo = computed(() => (daily.value.length ? `${round(daily.value[0].tMin)}°` : '—'))
 
-// ==== Fetch (loop-proof) ====
+// Fetch (loop-proof)
 let fetching = false
 async function fetchWeather() {
   if (fetching) return
@@ -79,6 +76,7 @@ async function fetchWeather() {
       timeout: 12000,
     })
 
+    // current
     if (data?.current_weather) {
       const { temperature, weathercode, is_day, windspeed, winddirection, time } =
         data.current_weather
@@ -94,6 +92,7 @@ async function fetchWeather() {
       current.value = null
     }
 
+    // daily (14 days)
     const d = data?.daily || {}
     const days = []
     const len = (d.time || []).length
@@ -116,18 +115,20 @@ async function fetchWeather() {
     }
     daily.value = days
 
+    // hourly → next 48 hours list
     const h = data?.hourly || {}
-    next24.value = []
+    next48.value = []
     if (h.time?.length) {
+      // align to current hour
       let idx = 0
       if (current.value?.time) {
         const curHour = current.value.time.slice(0, 13)
         const found = h.time.findIndex((t) => t.slice(0, 13) === curHour)
         idx = found >= 0 ? found : 0
       }
-      const end = Math.min(idx + 24, h.time.length)
+      const end = Math.min(idx + 48, h.time.length)
       for (let i = idx; i < end; i++) {
-        next24.value.push({
+        next48.value.push({
           time: h.time[i],
           temp: h.temperature_2m?.[i],
           feels: h.apparent_temperature?.[i],
@@ -149,6 +150,7 @@ onMounted(fetchWeather)
 </script>
 
 <template>
+  <!-- WEATHER (clickable to open modal) -->
   <section
     class="glass rounded-md shadow-card p-5 w-full overflow-hidden cursor-pointer hover:ring-1 ring-accent/40 transition"
     id="widget-weather"
@@ -160,15 +162,19 @@ onMounted(fetchWeather)
     @click="openModal"
     @keydown="onKeyActivate"
   >
+    <!-- Spinner -->
     <div v-if="loading" class="flex items-center justify-center h-40">
       <VueSpinnerOval size="48" color="#38bdf8" />
     </div>
 
+    <!-- Error -->
     <div v-else-if="error" class="text-center text-red-400 py-10">
       {{ error }}
     </div>
 
+    <!-- Content -->
     <template v-else>
+      <!-- Header / Current -->
       <div class="flex items-center justify-between mb-4">
         <div>
           <h2 id="weather-title" class="card-title text-slate-100 font-semibold tracking-wide">
@@ -185,6 +191,7 @@ onMounted(fetchWeather)
         </div>
       </div>
 
+      <!-- 7-Day Forecast (compact) -->
       <div class="grid grid-cols-7 gap-3 text-center text-slate-300 text-sm mt-3" role="list">
         <div
           v-for="d in daily.slice(0, 7)"
@@ -201,13 +208,15 @@ onMounted(fetchWeather)
     </template>
   </section>
 
-  <WeatherDetailsModal v-model="isOpen" :current="current" :daily="daily" :next24="next24" />
+  <!-- Details Modal -->
+  <WeatherDetailsModal v-model="isOpen" :current="current" :daily="daily" :next48="next48" />
 </template>
 
 <style scoped>
 #widget-weather .card-title {
   letter-spacing: 0.02em;
 }
+/* Lighter scrollbars on dark */
 ::-webkit-scrollbar {
   height: 6px;
   width: 8px;
