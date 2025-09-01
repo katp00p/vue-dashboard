@@ -198,7 +198,13 @@ onMounted(fetchWeather)
               Scarborough Weather
             </h2>
             <div class="mt-1 flex items-centier gap-2 text-xs text-slate-400">
-              <span><UpdatedAgo :at="lastUpdated" /></span>
+              <span
+                ><UpdatedAgo
+                  :at="lastUpdated"
+                  clickable
+                  :spinning="loading"
+                  @refresh="fetchWeather"
+              /></span>
             </div>
           </div>
           <button
