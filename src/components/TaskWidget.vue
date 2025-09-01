@@ -19,6 +19,7 @@ onMounted(() => {
   store.seedIfEmpty()
 })
 
+/* ---------- Add Modal State ---------- */
 const addOpen = ref(false)
 const addType = ref('list')
 const title = ref('')
@@ -48,7 +49,40 @@ function submitAdd() {
   closeAdd()
 }
 
-// render helpers
+/* ---------- Edit Modal State ---------- */
+const editOpen = ref(false)
+const editType = ref('task') // 'task' | 'list' | 'project'
+const editId = ref(null)
+const editTitle = ref('')
+const initialEditFocusRef = ref(null)
+
+function openEdit(type, id) {
+  editType.value = type
+  editId.value = id
+  // Prefill current title
+  if (type === 'project') editTitle.value = store.projects[id]?.title || ''
+  else if (type === 'list') editTitle.value = store.lists[id]?.title || ''
+  else editTitle.value = store.tasks[id]?.title || ''
+  editOpen.value = true
+}
+function closeEdit() {
+  editOpen.value = false
+  editId.value = null
+  editTitle.value = ''
+}
+
+const canSaveEdit = computed(() => editTitle.value.trim().length > 0)
+
+function saveEdit() {
+  if (!canSaveEdit.value || !editId.value) return
+  const text = editTitle.value.trim()
+  if (editType.value === 'project') store.renameProject(editId.value, text)
+  else if (editType.value === 'list') store.renameList(editId.value, text)
+  else store.renameTask(editId.value, text)
+  closeEdit()
+}
+
+/* ---------- Render Helpers ---------- */
 const projects = computed(() =>
   store.order.projects.map((id) => store.projects[id]).filter(Boolean),
 )
@@ -120,10 +154,18 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                 <div
                   class="flex items-center gap-1 opacity-0 group-hover/project:opacity-100 transition-opacity"
                 >
-                  <button class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded">
+                  <button
+                    class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded"
+                    @click.stop.prevent="openEdit('project', p.id)"
+                    aria-label="Edit project"
+                  >
                     <i class="fa-solid fa-pencil text-xs"></i>
                   </button>
-                  <button class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded">
+                  <button
+                    class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
+                    @click.stop.prevent
+                    aria-label="Delete project"
+                  >
                     <i class="fa-solid fa-xmark text-xs"></i>
                   </button>
                 </div>
@@ -159,11 +201,15 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                         >
                           <button
                             class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded"
+                            @click.stop.prevent="openEdit('list', l.id)"
+                            aria-label="Edit list"
                           >
                             <i class="fa-solid fa-pencil text-xs"></i>
                           </button>
                           <button
                             class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
+                            @click.stop.prevent
+                            aria-label="Delete list"
                           >
                             <i class="fa-solid fa-xmark text-xs"></i>
                           </button>
@@ -202,11 +248,15 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                             >
                               <button
                                 class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded"
+                                @click.stop.prevent="openEdit('task', t.id)"
+                                aria-label="Edit task"
                               >
                                 <i class="fa-solid fa-pencil text-xs"></i>
                               </button>
                               <button
                                 class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
+                                @click.stop.prevent
+                                aria-label="Delete task"
                               >
                                 <i class="fa-solid fa-xmark text-xs"></i>
                               </button>
@@ -257,10 +307,18 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                 <div
                   class="flex items-center gap-1 opacity-0 group-hover/list:opacity-100 transition-opacity"
                 >
-                  <button class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded">
+                  <button
+                    class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded"
+                    @click.stop.prevent="openEdit('list', l.id)"
+                    aria-label="Edit list"
+                  >
                     <i class="fa-solid fa-pencil text-xs"></i>
                   </button>
-                  <button class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded">
+                  <button
+                    class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
+                    @click.stop.prevent
+                    aria-label="Delete list"
+                  >
                     <i class="fa-solid fa-xmark text-xs"></i>
                   </button>
                 </div>
@@ -296,11 +354,17 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                     <div
                       class="flex items-center gap-1 opacity-0 group-hover/task:opacity-100 transition-opacity"
                     >
-                      <button class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded">
+                      <button
+                        class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded"
+                        @click.stop.prevent="openEdit('task', t.id)"
+                        aria-label="Edit task"
+                      >
                         <i class="fa-solid fa-pencil text-xs"></i>
                       </button>
                       <button
                         class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
+                        @click.stop.prevent
+                        aria-label="Delete task"
                       >
                         <i class="fa-solid fa-xmark text-xs"></i>
                       </button>
@@ -348,10 +412,18 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
             <div
               class="flex items-center gap-1 opacity-0 group-hover/task:opacity-100 transition-opacity"
             >
-              <button class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded">
+              <button
+                class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded"
+                @click.stop.prevent="openEdit('task', t.id)"
+                aria-label="Edit task"
+              >
                 <i class="fa-solid fa-pencil text-xs"></i>
               </button>
-              <button class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded">
+              <button
+                class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
+                @click.stop.prevent
+                aria-label="Delete task"
+              >
                 <i class="fa-solid fa-xmark text-xs"></i>
               </button>
             </div>
@@ -401,7 +473,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                   </div>
                 </div>
 
-                <div class="px-6 py-5 space-y-4">
+                <form class="px-6 py-5 space-y-4" @submit.prevent="submitAdd">
                   <!-- Type buttons -->
                   <div class="flex gap-2" role="radiogroup" aria-label="Type">
                     <button
@@ -462,7 +534,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                             ? 'e.g., Prep for Showings'
                             : 'e.g., Sell House'
                       "
-                      class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                      class="vd-input w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 caret-white"
                       v-model="title"
                     />
                   </div>
@@ -508,10 +580,9 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                   <!-- Actions -->
                   <div class="flex items-center gap-2 pt-1">
                     <button
-                      type="button"
+                      type="submit"
                       class="px-3 py-2 rounded-lg bg-white/10 text-slate-100 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:opacity-50"
                       :disabled="!canSubmit"
-                      @click="submitAdd"
                     >
                       Add
                     </button>
@@ -523,7 +594,86 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                       Cancel
                     </button>
                   </div>
+                </form>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
+
+    <!-- Edit Entity Modal -->
+    <TransitionRoot as="template" :show="editOpen">
+      <Dialog
+        as="div"
+        class="relative z-50"
+        :initial-focus="initialEditFocusRef"
+        @close="closeEdit"
+      >
+        <div class="fixed inset-0 bg-slate-900/80" aria-hidden="true"></div>
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4">
+            <TransitionChild
+              as="template"
+              enter="transition ease-out duration-150"
+              enter-from="opacity-0 translate-y-2 scale-95"
+              enter-to="opacity-100 translate-y-0 scale-100"
+              leave="transition ease-in duration-100"
+              leave-from="opacity-100 translate-y-0 scale-100"
+              leave-to="opacity-0 translate-y-2 scale-95"
+            >
+              <DialogPanel
+                class="w-full max-w-md rounded-xl border border-white/10 bg-[rgba(30,41,59,0.9)] backdrop-blur-md shadow-xl"
+              >
+                <div class="border-b border-white/10 px-5 pt-[1px] pb-2 -mx-5">
+                  <div class="flex items-center justify-between px-4">
+                    <DialogTitle class="card-title text-slate-100 font-semibold leading-tight">
+                      Edit
+                      {{
+                        editType === 'project' ? 'Project' : editType === 'list' ? 'List' : 'Task'
+                      }}
+                    </DialogTitle>
+                    <button
+                      type="button"
+                      aria-label="Close"
+                      class="p-2 rounded-md text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                      @click="closeEdit"
+                    >
+                      <i class="fa-solid fa-xmark"></i>
+                    </button>
+                  </div>
                 </div>
+
+                <form class="px-6 py-5 space-y-4" @submit.prevent="saveEdit">
+                  <div>
+                    <label for="edit-title" class="block text-sm text-slate-300 mb-1">Title</label>
+                    <input
+                      id="edit-title"
+                      ref="initialEditFocusRef"
+                      type="text"
+                      autocomplete="off"
+                      class="vd-input w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 caret-white"
+                      v-model="editTitle"
+                    />
+                  </div>
+
+                  <div class="flex items-center gap-2 pt-1">
+                    <button
+                      type="submit"
+                      class="px-3 py-2 rounded-lg bg-white/10 text-slate-100 hover:bg-white/15 focus:outline-none focus:ring-2 focus:ring-accent/40 disabled:opacity-50"
+                      :disabled="!canSaveEdit"
+                    >
+                      Save
+                    </button>
+                    <button
+                      type="button"
+                      class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                      @click="closeEdit"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
               </DialogPanel>
             </TransitionChild>
           </div>
@@ -533,4 +683,13 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
   </section>
 </template>
 
-<style scoped></style>
+<style scoped>
+.vd-input::selection {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+} /* Chrome/Safari/Edge */
+.vd-input::-moz-selection {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+} /* Firefox */
+</style>
