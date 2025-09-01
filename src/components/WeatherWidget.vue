@@ -216,7 +216,7 @@ onUnmounted(() => {
     <template v-else>
       <!-- UFC-style header -->
       <div
-        class="sticky top-0 z-20 border-b border-white/10 bg-transparent -mx-5 px-4 pt-[1px] pb-2"
+        class="sticky top-0 z-20 border-b border-white/10 bg-transparent -mx-5 px-4 pt-[1px] pb-1"
       >
         <div class="flex items-start justify-between gap-3">
           <div class="flex flex-col">
