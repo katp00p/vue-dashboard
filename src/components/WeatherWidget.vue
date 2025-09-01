@@ -1,5 +1,5 @@
 <script setup>
-import { ref, computed, onMounted } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import axios from 'axios'
 import { VueSpinnerOval } from 'vue3-spinners'
 import WeatherDetailsModal from './weather/WeatherDetailsModal.vue'
@@ -8,6 +8,7 @@ import { codeToText, codeToIcon, fmtDay, round } from '../utils/weatherUtils'
 const LAT = 43.764315
 const LON = -79.199
 
+// Modal state
 const isOpen = ref(false)
 function openModal() {
   isOpen.value = true
@@ -19,17 +20,20 @@ function onKeyActivate(e) {
   }
 }
 
+// Optional: settings click (stub)
 function openSettings() {
-  /* stub */
+  /* no-op for now */
 }
 
+// Reactive state
 const loading = ref(true)
 const error = ref('')
-const current = ref(null)
-const daily = ref([])
-const next48 = ref([])
-const lastUpdated = ref(null)
+const current = ref(null) // { temp, code, isDay, windspeed, winddirection, time }
+const daily = ref([]) // 14 days
+const next48 = ref([]) // next 48 hours list
+const lastUpdated = ref(null) // timestamp of last successful fetch
 
+// Derived (widget header)
 const currentText = computed(() => (current.value ? codeToText(current.value.code) : '—'))
 const currentIcon = computed(() =>
   current.value ? codeToIcon(current.value.code, current.value.isDay) : 'fa-solid fa-cloud',
@@ -38,6 +42,7 @@ const currentTemp = computed(() => (current.value ? `${round(current.value.temp)
 const todayHi = computed(() => (daily.value.length ? `${round(daily.value[0].tMax)}°` : '—'))
 const todayLo = computed(() => (daily.value.length ? `${round(daily.value[0].tMin)}°` : '—'))
 
+// Fetch (loop-proof)
 let fetching = false
 async function fetchWeather() {
   if (fetching) return
@@ -65,6 +70,7 @@ async function fetchWeather() {
           'uv_index_max',
           'weathercode',
         ].join(','),
+        // Hourly variables (includes extra fields used in "Now")
         hourly: [
           'temperature_2m',
           'apparent_temperature',
@@ -88,6 +94,7 @@ async function fetchWeather() {
       timeout: 12000,
     })
 
+    // current
     if (data?.current_weather) {
       const { temperature, weathercode, is_day, windspeed, winddirection, time } =
         data.current_weather
@@ -99,8 +106,11 @@ async function fetchWeather() {
         winddirection,
         time,
       }
-    } else current.value = null
+    } else {
+      current.value = null
+    }
 
+    // daily (14 days)
     const d = data?.daily || {}
     const days = []
     const len = (d.time || []).length
@@ -123,9 +133,11 @@ async function fetchWeather() {
     }
     daily.value = days
 
+    // hourly → next 48 hours list
     const h = data?.hourly || {}
     next48.value = []
     if (h.time?.length) {
+      // align to current hour
       let idx = 0
       if (current.value?.time) {
         const curHour = current.value.time.slice(0, 13)
@@ -147,13 +159,15 @@ async function fetchWeather() {
           wd: h.winddirection_10m?.[i],
           rh: h.relative_humidity_2m?.[i],
           uv: h.uv_index?.[i],
-          press: h.pressure_msl?.[i] ?? h.surface_pressure?.[i],
-          vis: h.visibility?.[i],
-          snow: h.snow_depth?.[i],
+          // extras
+          press: h.pressure_msl?.[i] ?? h.surface_pressure?.[i], // hPa
+          vis: h.visibility?.[i], // meters
+          snow: h.snow_depth?.[i], // meters
         })
       }
     }
 
+    // mark successful update time
     lastUpdated.value = Date.now()
   } catch (e) {
     error.value = 'Unable to load weather right now.'
@@ -164,10 +178,19 @@ async function fetchWeather() {
   }
 }
 
-onMounted(fetchWeather)
+// ⏱️ Auto-refresh every 5 minutes (and clean up)
+let refreshTimer = null
+onMounted(() => {
+  fetchWeather()
+  refreshTimer = setInterval(fetchWeather, 5 * 60 * 1000) // 300000 ms
+})
+onUnmounted(() => {
+  if (refreshTimer) clearInterval(refreshTimer)
+})
 </script>
 
 <template>
+  <!-- WEATHER (clickable to open modal) -->
   <section
     class="glass rounded-md shadow-card px-5 pb-5 pt-2 w-full overflow-hidden cursor-pointer hover:ring-1 ring-accent/40 transition"
     id="widget-weather"
@@ -179,16 +202,19 @@ onMounted(fetchWeather)
     @click="openModal"
     @keydown="onKeyActivate"
   >
+    <!-- Spinner -->
     <div v-if="loading" class="flex items-center justify-center h-40">
       <VueSpinnerOval size="48" color="#38bdf8" />
     </div>
 
+    <!-- Error -->
     <div v-else-if="error" class="text-center text-red-400 py-10">
       {{ error }}
     </div>
 
+    <!-- Content -->
     <template v-else>
-      <!-- UFC-style header — minus card padding -->
+      <!-- UFC-style header -->
       <div
         class="sticky top-0 z-20 border-b border-white/10 bg-transparent -mx-5 px-4 pt-[1px] pb-2"
       >
@@ -197,14 +223,8 @@ onMounted(fetchWeather)
             <h2 id="weather-title" class="card-title text-slate-100 font-semibold leading-tight">
               Scarborough Weather
             </h2>
-            <div class="mt-1 flex items-centier gap-2 text-xs text-slate-400">
-              <span
-                ><UpdatedAgo
-                  :at="lastUpdated"
-                  clickable
-                  :spinning="loading"
-                  @refresh="fetchWeather"
-              /></span>
+            <div class="mt-1">
+              <UpdatedAgo :at="lastUpdated" clickable :spinning="loading" @refresh="fetchWeather" />
             </div>
           </div>
           <button
@@ -221,7 +241,7 @@ onMounted(fetchWeather)
       <!-- Current summary -->
       <div class="flex items-center justify-between mb-4 mt-3">
         <div>
-          <p class="text-slate-300 text-sm">{{ currentText }}</p>
+          <p class="text-slate-300 text-md">{{ currentText }}</p>
         </div>
         <div class="flex items-center gap-3">
           <i :class="[currentIcon]" class="text-4xl text-white" aria-hidden="true"></i>
@@ -249,6 +269,7 @@ onMounted(fetchWeather)
     </template>
   </section>
 
+  <!-- Details Modal -->
   <WeatherDetailsModal
     v-model="isOpen"
     :current="current"
