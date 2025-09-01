@@ -223,8 +223,14 @@ onUnmounted(() => {
             <h2 id="weather-title" class="card-title text-slate-100 font-semibold leading-tight">
               Scarborough Weather
             </h2>
-            <div class="mt-1">
-              <UpdatedAgo :at="lastUpdated" clickable :spinning="loading" @refresh="fetchWeather" />
+            <div>
+              <UpdatedAgo
+                :at="lastUpdated"
+                clickable
+                :spinning="loading"
+                class="-ml-1"
+                @refresh="fetchWeather"
+              />
             </div>
           </div>
           <button
