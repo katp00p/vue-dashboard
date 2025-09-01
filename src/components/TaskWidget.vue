@@ -59,7 +59,6 @@ const initialEditFocusRef = ref(null)
 function openEdit(type, id) {
   editType.value = type
   editId.value = id
-  // Prefill current title
   if (type === 'project') editTitle.value = store.projects[id]?.title || ''
   else if (type === 'list') editTitle.value = store.lists[id]?.title || ''
   else editTitle.value = store.tasks[id]?.title || ''
@@ -70,9 +69,7 @@ function closeEdit() {
   editId.value = null
   editTitle.value = ''
 }
-
 const canSaveEdit = computed(() => editTitle.value.trim().length > 0)
-
 function saveEdit() {
   if (!canSaveEdit.value || !editId.value) return
   const text = editTitle.value.trim()
@@ -80,6 +77,54 @@ function saveEdit() {
   else if (editType.value === 'list') store.renameList(editId.value, text)
   else store.renameTask(editId.value, text)
   closeEdit()
+}
+
+/* ---------- Delete Confirm Modal ---------- */
+const deleteOpen = ref(false)
+const deleteType = ref('task') // 'task' | 'list' | 'project'
+const deleteId = ref(null)
+const initialDeleteFocusRef = ref(null)
+
+function openDelete(type, id) {
+  deleteType.value = type
+  deleteId.value = id
+  deleteOpen.value = true
+}
+function closeDelete() {
+  deleteOpen.value = false
+  deleteId.value = null
+}
+
+const deleteTitle = computed(() => {
+  if (!deleteId.value) return ''
+  if (deleteType.value === 'project')
+    return store.projects[deleteId.value]?.title || 'Untitled Project'
+  if (deleteType.value === 'list') return store.lists[deleteId.value]?.title || 'Untitled List'
+  return store.tasks[deleteId.value]?.title || 'Untitled Task'
+})
+
+const cascadeCounts = computed(() => {
+  if (!deleteId.value) return { lists: 0, tasks: 0 }
+  if (deleteType.value === 'project') {
+    const p = store.projects[deleteId.value]
+    const listIds = p?.listIds || []
+    const lists = listIds.length
+    const tasks = listIds.reduce((acc, lid) => acc + (store.lists[lid]?.taskIds?.length || 0), 0)
+    return { lists, tasks }
+  }
+  if (deleteType.value === 'list') {
+    const l = store.lists[deleteId.value]
+    return { lists: 0, tasks: l?.taskIds?.length || 0 }
+  }
+  return { lists: 0, tasks: 0 }
+})
+
+function confirmDelete() {
+  if (!deleteId.value) return
+  if (deleteType.value === 'project') store.deleteProject(deleteId.value)
+  else if (deleteType.value === 'list') store.deleteList(deleteId.value)
+  else store.deleteTask(deleteId.value)
+  closeDelete()
 }
 
 /* ---------- Render Helpers ---------- */
@@ -163,7 +208,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                   </button>
                   <button
                     class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
-                    @click.stop.prevent
+                    @click.stop.prevent="openDelete('project', p.id)"
                     aria-label="Delete project"
                   >
                     <i class="fa-solid fa-xmark text-xs"></i>
@@ -208,7 +253,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                           </button>
                           <button
                             class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
-                            @click.stop.prevent
+                            @click.stop.prevent="openDelete('list', l.id)"
                             aria-label="Delete list"
                           >
                             <i class="fa-solid fa-xmark text-xs"></i>
@@ -255,7 +300,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                               </button>
                               <button
                                 class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
-                                @click.stop.prevent
+                                @click.stop.prevent="openDelete('task', t.id)"
                                 aria-label="Delete task"
                               >
                                 <i class="fa-solid fa-xmark text-xs"></i>
@@ -316,7 +361,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                   </button>
                   <button
                     class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
-                    @click.stop.prevent
+                    @click.stop.prevent="openDelete('list', l.id)"
                     aria-label="Delete list"
                   >
                     <i class="fa-solid fa-xmark text-xs"></i>
@@ -363,7 +408,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                       </button>
                       <button
                         class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
-                        @click.stop.prevent
+                        @click.stop.prevent="openDelete('task', t.id)"
                         aria-label="Delete task"
                       >
                         <i class="fa-solid fa-xmark text-xs"></i>
@@ -421,7 +466,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
               </button>
               <button
                 class="p-1 text-slate-300 hover:text-red-400 hover:bg-white/10 rounded"
-                @click.stop.prevent
+                @click.stop.prevent="openDelete('task', t.id)"
                 aria-label="Delete task"
               >
                 <i class="fa-solid fa-xmark text-xs"></i>
@@ -451,7 +496,8 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                 class="w-full max-w-md rounded-xl border border-white/10 bg-[rgba(30,41,59,0.9)] backdrop-blur-md shadow-xl"
               >
                 <div class="border-b border-white/10 px-5 pt-[1px] pb-2 -mx-5">
-                  <div class="flex items-center justify-between px-4">
+                  <!-- Added pt-2 to header row -->
+                  <div class="flex items-center px-4 pt-2">
                     <DialogTitle class="card-title text-slate-100 font-semibold leading-tight">
                       Add
                       {{
@@ -462,14 +508,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                             : 'Task'
                       }}
                     </DialogTitle>
-                    <button
-                      type="button"
-                      aria-label="Close"
-                      class="p-2 rounded-md text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40"
-                      @click="closeAdd"
-                    >
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
                   </div>
                 </div>
 
@@ -524,9 +562,10 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                     >
                     <input
                       id="entity-title"
-                      ref="initialFocusRef"
+                      class="vd-input w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 caret-white"
                       type="text"
                       autocomplete="off"
+                      v-model="title"
                       :placeholder="
                         addType === 'task'
                           ? 'e.g., Call mover for quote'
@@ -534,8 +573,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                             ? 'e.g., Prep for Showings'
                             : 'e.g., Sell House'
                       "
-                      class="vd-input w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 caret-white"
-                      v-model="title"
                     />
                   </div>
 
@@ -626,21 +663,14 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                 class="w-full max-w-md rounded-xl border border-white/10 bg-[rgba(30,41,59,0.9)] backdrop-blur-md shadow-xl"
               >
                 <div class="border-b border-white/10 px-5 pt-[1px] pb-2 -mx-5">
-                  <div class="flex items-center justify-between px-4">
+                  <!-- Added pt-2 to header row -->
+                  <div class="flex items-center px-4 pt-2">
                     <DialogTitle class="card-title text-slate-100 font-semibold leading-tight">
                       Edit
                       {{
                         editType === 'project' ? 'Project' : editType === 'list' ? 'List' : 'Task'
                       }}
                     </DialogTitle>
-                    <button
-                      type="button"
-                      aria-label="Close"
-                      class="p-2 rounded-md text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40"
-                      @click="closeEdit"
-                    >
-                      <i class="fa-solid fa-xmark"></i>
-                    </button>
                   </div>
                 </div>
 
@@ -649,10 +679,9 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                     <label for="edit-title" class="block text-sm text-slate-300 mb-1">Title</label>
                     <input
                       id="edit-title"
-                      ref="initialEditFocusRef"
+                      class="vd-input w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 caret-white"
                       type="text"
                       autocomplete="off"
-                      class="vd-input w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 placeholder:text-slate-400 focus:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 caret-white"
                       v-model="editTitle"
                     />
                   </div>
@@ -680,16 +709,120 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
         </div>
       </Dialog>
     </TransitionRoot>
+
+    <!-- Delete Confirm Modal -->
+    <TransitionRoot as="template" :show="deleteOpen">
+      <Dialog
+        as="div"
+        class="relative z-50"
+        :initial-focus="initialDeleteFocusRef"
+        @close="closeDelete"
+      >
+        <div class="fixed inset-0 bg-slate-900/80" aria-hidden="true"></div>
+        <div class="fixed inset-0 overflow-y-auto">
+          <div class="flex min-h-full items-center justify-center p-4">
+            <TransitionChild
+              as="template"
+              enter="transition ease-out duration-150"
+              enter-from="opacity-0 translate-y-2 scale-95"
+              enter-to="opacity-100 translate-y-0 scale-100"
+              leave="transition ease-in duration-100"
+              leave-from="opacity-100 translate-y-0 scale-100"
+              leave-to="opacity-0 translate-y-2 scale-95"
+            >
+              <DialogPanel
+                class="w-full max-w-md rounded-xl border border-white/10 bg-[rgba(15,23,42,0.95)] backdrop-blur-md shadow-xl"
+              >
+                <div class="border-b border-white/10 px-5 pt-[1px] pb-2 -mx-5">
+                  <!-- Added pt-2 to header row -->
+                  <div class="flex items-center px-4 pt-2">
+                    <DialogTitle class="card-title text-slate-100 font-semibold leading-tight">
+                      Delete
+                      {{
+                        deleteType === 'project'
+                          ? 'Project'
+                          : deleteType === 'list'
+                            ? 'List'
+                            : 'Task'
+                      }}
+                    </DialogTitle>
+                  </div>
+                </div>
+
+                <form class="px-6 py-5 space-y-5" @submit.prevent="confirmDelete">
+                  <div class="text-sm text-slate-200">
+                    <p class="mb-2">
+                      Are you sure you want to delete
+                      <span class="font-semibold">“{{ deleteTitle }}”</span>?
+                    </p>
+                    <p v-if="deleteType === 'project'" class="text-slate-300">
+                      This will also remove
+                      <span class="font-semibold">{{ cascadeCounts.lists }}</span> list<span
+                        v-if="cascadeCounts.lists !== 1"
+                        >s</span
+                      >
+                      and <span class="font-semibold">{{ cascadeCounts.tasks }}</span> task<span
+                        v-if="cascadeCounts.tasks !== 1"
+                        >s</span
+                      >.
+                    </p>
+                    <p v-else-if="deleteType === 'list'" class="text-slate-300">
+                      This will also remove
+                      <span class="font-semibold">{{ cascadeCounts.tasks }}</span> task<span
+                        v-if="cascadeCounts.tasks !== 1"
+                        >s</span
+                      >
+                      in this list.
+                    </p>
+                    <p v-else class="text-slate-300">This will remove this task.</p>
+                    <p class="mt-3 text-slate-400 text-xs">This action cannot be undone.</p>
+                  </div>
+
+                  <div class="flex items-center gap-2">
+                    <button
+                      type="submit"
+                      class="px-3 py-2 rounded-lg bg-red-500/20 text-red-200 hover:bg-red-500/30 focus:outline-none focus:ring-2 focus:ring-red-400/40"
+                    >
+                      Delete
+                    </button>
+                    <button
+                      type="button"
+                      class="px-3 py-2 rounded-lg text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                      @click="closeDelete"
+                    >
+                      Cancel
+                    </button>
+                  </div>
+                </form>
+              </DialogPanel>
+            </TransitionChild>
+          </div>
+        </div>
+      </Dialog>
+    </TransitionRoot>
   </section>
 </template>
 
 <style scoped>
+/* Selected text visibility inside inputs (works across browsers) */
 .vd-input::selection {
   background: rgba(255, 255, 255, 0.96);
   color: #0f172a;
-} /* Chrome/Safari/Edge */
+}
 .vd-input::-moz-selection {
   background: rgba(255, 255, 255, 0.96);
   color: #0f172a;
-} /* Firefox */
+}
+</style>
+
+<!-- Global (non-scoped) fallback in case some browsers ignore scoped ::selection on inputs -->
+<style>
+.vd-input::selection {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+}
+.vd-input::-moz-selection {
+  background: rgba(255, 255, 255, 0.96);
+  color: #0f172a;
+}
 </style>
