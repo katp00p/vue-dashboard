@@ -21,13 +21,14 @@ onMounted(() => {
 
 /* ---------- Add Modal State ---------- */
 const addOpen = ref(false)
-const addType = ref('list')
+const addType = ref('task') // default to "task"
 const title = ref('')
 const parentProjectId = ref(null)
 const parentListId = ref(null)
 const initialFocusRef = ref(null)
 
-function openAdd(type = 'list') {
+function openAdd(type = 'task') {
+  // default to "task"
   addType.value = type
   title.value = ''
   parentProjectId.value = null
@@ -51,7 +52,7 @@ function submitAdd() {
 
 /* ---------- Edit Modal State ---------- */
 const editOpen = ref(false)
-const editType = ref('task') // 'task' | 'list' | 'project'
+const editType = ref('task')
 const editId = ref(null)
 const editTitle = ref('')
 const initialEditFocusRef = ref(null)
@@ -81,7 +82,7 @@ function saveEdit() {
 
 /* ---------- Delete Confirm Modal ---------- */
 const deleteOpen = ref(false)
-const deleteType = ref('task') // 'task' | 'list' | 'project'
+const deleteType = ref('task')
 const deleteId = ref(null)
 const initialDeleteFocusRef = ref(null)
 
@@ -153,7 +154,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
           type="button"
           aria-label="Add"
           class="p-2 rounded-md text-slate-300 hover:text-white hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40"
-          @click="openAdd('list')"
+          @click="openAdd('task')"
         >
           <i class="fa-solid fa-plus text-base"></i>
         </button>
@@ -172,7 +173,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
             class="rounded-lg border border-accent/40 bg-accent/10"
           >
             <Disclosure>
-              <!-- Named group for Project row -->
               <DisclosureButton
                 class="w-full flex items-center justify-between gap-3 px-3 py-2 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-accent/40 rounded-lg group/project"
                 :aria-label="`Toggle project ${p.title}`"
@@ -195,7 +195,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                     tasks
                   </span>
                 </div>
-                <!-- Hover icons (only on hovered project row) -->
                 <div
                   class="flex items-center gap-1 opacity-0 group-hover/project:opacity-100 transition-opacity"
                 >
@@ -224,7 +223,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                     class="rounded-lg border border-white/10 bg-white/5"
                   >
                     <Disclosure>
-                      <!-- Named group for List row -->
                       <DisclosureButton
                         class="w-full flex items-center justify-between gap-3 px-3 py-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 rounded-lg group/list"
                         :aria-label="`Toggle list ${l.title}`"
@@ -240,7 +238,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                             >{{ l.taskIds.length }} tasks</span
                           >
                         </div>
-                        <!-- Hover icons (only on hovered list row) -->
                         <div
                           class="flex items-center gap-1 opacity-0 group-hover/list:opacity-100 transition-opacity"
                         >
@@ -263,7 +260,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
 
                       <DisclosurePanel class="px-2 pb-2">
                         <ul class="space-y-1">
-                          <!-- Named group for Task row -->
                           <li
                             v-for="t in tasksInList(l.id)"
                             :key="t.id"
@@ -287,7 +283,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                                 {{ t.title }}
                               </p>
                             </div>
-                            <!-- Hover icons (only on hovered task row) -->
                             <div
                               class="flex items-center gap-1 opacity-0 group-hover/task:opacity-100 transition-opacity"
                             >
@@ -334,7 +329,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
             class="rounded-lg border border-white/10 bg-white/5"
           >
             <Disclosure>
-              <!-- Named group for List row -->
               <DisclosureButton
                 class="w-full flex items-center justify-between gap-3 px-3 py-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 rounded-lg group/list"
                 :aria-label="`Toggle list ${l.title}`"
@@ -348,7 +342,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                   <span class="text-slate-100 font-medium">{{ l.title }}</span>
                   <span class="ml-2 text-xs text-slate-300">{{ l.taskIds.length }} tasks</span>
                 </div>
-                <!-- Hover icons (only on hovered list row) -->
                 <div
                   class="flex items-center gap-1 opacity-0 group-hover/list:opacity-100 transition-opacity"
                 >
@@ -371,7 +364,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
 
               <DisclosurePanel class="px-2 pb-2">
                 <ul class="space-y-1">
-                  <!-- Named group for Task row -->
                   <li
                     v-for="t in tasksInList(l.id)"
                     :key="t.id"
@@ -395,7 +387,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                         {{ t.title }}
                       </p>
                     </div>
-                    <!-- Hover icons (only on hovered task row) -->
                     <div
                       class="flex items-center gap-1 opacity-0 group-hover/task:opacity-100 transition-opacity"
                     >
@@ -429,7 +420,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
       <section v-if="ungroupedTasks.length">
         <h3 class="text-slate-200 font-semibold text-sm mb-2">Tasks</h3>
         <ul class="space-y-2">
-          <!-- Named group for Task row -->
           <li
             v-for="t in ungroupedTasks"
             :key="t.id"
@@ -453,7 +443,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                 {{ t.title }}
               </p>
             </div>
-            <!-- Hover icons (only on hovered task row) -->
             <div
               class="flex items-center gap-1 opacity-0 group-hover/task:opacity-100 transition-opacity"
             >
@@ -496,7 +485,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                 class="w-full max-w-md rounded-xl border border-white/10 bg-[rgba(30,41,59,0.9)] backdrop-blur-md shadow-xl"
               >
                 <div class="border-b border-white/10 px-5 pt-[1px] pb-2 -mx-5">
-                  <!-- Added pt-2 to header row -->
                   <div class="flex items-center px-4 pt-2">
                     <DialogTitle class="card-title text-slate-100 font-semibold leading-tight">
                       Add
@@ -580,7 +568,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                   <div v-if="addType === 'task'">
                     <label class="block text-sm text-slate-300 mb-1">Add to List (optional)</label>
                     <select
-                      class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                      class="vd-select w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent/40"
                       v-model="parentListId"
                     >
                       <option :value="null">— None —</option>
@@ -606,7 +594,7 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                       >Add to Project (optional)</label
                     >
                     <select
-                      class="w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent/40"
+                      class="vd-select w-full rounded-lg bg-white/5 border border-white/10 px-3 py-2 text-slate-100 focus:outline-none focus:ring-2 focus:ring-accent/40"
                       v-model="parentProjectId"
                     >
                       <option :value="null">— None —</option>
@@ -663,7 +651,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                 class="w-full max-w-md rounded-xl border border-white/10 bg-[rgba(30,41,59,0.9)] backdrop-blur-md shadow-xl"
               >
                 <div class="border-b border-white/10 px-5 pt-[1px] pb-2 -mx-5">
-                  <!-- Added pt-2 to header row -->
                   <div class="flex items-center px-4 pt-2">
                     <DialogTitle class="card-title text-slate-100 font-semibold leading-tight">
                       Edit
@@ -734,7 +721,6 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                 class="w-full max-w-md rounded-xl border border-white/10 bg-[rgba(15,23,42,0.95)] backdrop-blur-md shadow-xl"
               >
                 <div class="border-b border-white/10 px-5 pt-[1px] pb-2 -mx-5">
-                  <!-- Added pt-2 to header row -->
                   <div class="flex items-center px-4 pt-2">
                     <DialogTitle class="card-title text-slate-100 font-semibold leading-tight">
                       Delete
@@ -815,8 +801,20 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
 }
 </style>
 
-<!-- Global (non-scoped) fallback in case some browsers ignore scoped ::selection on inputs -->
+<!-- Global (non-scoped) fixes -->
 <style>
+/* Force readable colors for native <select> dropdown panels (options list) */
+.vd-select option {
+  color: #0f172a !important;
+  background-color: #ffffff !important;
+}
+.vd-select optgroup {
+  color: #0f172a !important;
+  background-color: #f1f5f9 !important;
+  font-weight: 600;
+}
+
+/* Fallback for input selection in browsers ignoring scoped rules */
 .vd-input::selection {
   background: rgba(255, 255, 255, 0.96);
   color: #0f172a;
