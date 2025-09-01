@@ -90,11 +90,12 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
           <li
             v-for="p in projects"
             :key="p.id"
-            class="rounded-lg border border-accent/40 bg-accent/10 group"
+            class="rounded-lg border border-accent/40 bg-accent/10"
           >
             <Disclosure>
+              <!-- Named group for Project row -->
               <DisclosureButton
-                class="w-full flex items-center justify-between gap-3 px-3 py-2 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-accent/40 rounded-lg"
+                class="w-full flex items-center justify-between gap-3 px-3 py-2 hover:bg-white/5 focus:outline-none focus:ring-2 focus:ring-accent/40 rounded-lg group/project"
                 :aria-label="`Toggle project ${p.title}`"
               >
                 <div class="flex flex-wrap items-center gap-2">
@@ -115,9 +116,9 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                     tasks
                   </span>
                 </div>
-                <!-- Hover icons -->
+                <!-- Hover icons (only on hovered project row) -->
                 <div
-                  class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="flex items-center gap-1 opacity-0 group-hover/project:opacity-100 transition-opacity"
                 >
                   <button class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded">
                     <i class="fa-solid fa-pencil text-xs"></i>
@@ -133,11 +134,12 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                   <li
                     v-for="l in listsInProject(p.id)"
                     :key="l.id"
-                    class="rounded-lg border border-white/10 bg-white/5 group"
+                    class="rounded-lg border border-white/10 bg-white/5"
                   >
                     <Disclosure>
+                      <!-- Named group for List row -->
                       <DisclosureButton
-                        class="w-full flex items-center justify-between gap-3 px-3 py-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 rounded-lg"
+                        class="w-full flex items-center justify-between gap-3 px-3 py-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 rounded-lg group/list"
                         :aria-label="`Toggle list ${l.title}`"
                       >
                         <div class="flex flex-wrap items-center gap-2">
@@ -151,9 +153,9 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                             >{{ l.taskIds.length }} tasks</span
                           >
                         </div>
-                        <!-- Hover icons -->
+                        <!-- Hover icons (only on hovered list row) -->
                         <div
-                          class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                          class="flex items-center gap-1 opacity-0 group-hover/list:opacity-100 transition-opacity"
                         >
                           <button
                             class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded"
@@ -170,10 +172,11 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
 
                       <DisclosurePanel class="px-2 pb-2">
                         <ul class="space-y-1">
+                          <!-- Named group for Task row -->
                           <li
                             v-for="t in tasksInList(l.id)"
                             :key="t.id"
-                            class="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-white/5 group"
+                            class="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-white/5 group/task"
                           >
                             <div class="flex items-center gap-2">
                               <input
@@ -193,9 +196,9 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                                 {{ t.title }}
                               </p>
                             </div>
-                            <!-- Hover icons -->
+                            <!-- Hover icons (only on hovered task row) -->
                             <div
-                              class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                              class="flex items-center gap-1 opacity-0 group-hover/task:opacity-100 transition-opacity"
                             >
                               <button
                                 class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded"
@@ -233,11 +236,12 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
           <li
             v-for="l in ungroupedLists"
             :key="l.id"
-            class="rounded-lg border border-white/10 bg-white/5 group"
+            class="rounded-lg border border-white/10 bg-white/5"
           >
             <Disclosure>
+              <!-- Named group for List row -->
               <DisclosureButton
-                class="w-full flex items-center justify-between gap-3 px-3 py-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 rounded-lg"
+                class="w-full flex items-center justify-between gap-3 px-3 py-2 hover:bg-white/10 focus:outline-none focus:ring-2 focus:ring-accent/40 rounded-lg group/list"
                 :aria-label="`Toggle list ${l.title}`"
               >
                 <div class="flex flex-wrap items-center gap-2">
@@ -249,9 +253,9 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                   <span class="text-slate-100 font-medium">{{ l.title }}</span>
                   <span class="ml-2 text-xs text-slate-300">{{ l.taskIds.length }} tasks</span>
                 </div>
-                <!-- Hover icons -->
+                <!-- Hover icons (only on hovered list row) -->
                 <div
-                  class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                  class="flex items-center gap-1 opacity-0 group-hover/list:opacity-100 transition-opacity"
                 >
                   <button class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded">
                     <i class="fa-solid fa-pencil text-xs"></i>
@@ -264,10 +268,11 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
 
               <DisclosurePanel class="px-2 pb-2">
                 <ul class="space-y-1">
+                  <!-- Named group for Task row -->
                   <li
                     v-for="t in tasksInList(l.id)"
                     :key="t.id"
-                    class="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-white/5 group"
+                    class="flex items-center justify-between gap-2 px-2 py-1 rounded hover:bg-white/5 group/task"
                   >
                     <div class="flex items-center gap-2">
                       <input
@@ -287,9 +292,9 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                         {{ t.title }}
                       </p>
                     </div>
-                    <!-- Hover icons -->
+                    <!-- Hover icons (only on hovered task row) -->
                     <div
-                      class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+                      class="flex items-center gap-1 opacity-0 group-hover/task:opacity-100 transition-opacity"
                     >
                       <button class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded">
                         <i class="fa-solid fa-pencil text-xs"></i>
@@ -315,10 +320,11 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
       <section v-if="ungroupedTasks.length">
         <h3 class="text-slate-200 font-semibold text-sm mb-2">Tasks</h3>
         <ul class="space-y-2">
+          <!-- Named group for Task row -->
           <li
             v-for="t in ungroupedTasks"
             :key="t.id"
-            class="flex items-center justify-between gap-2 px-2 py-1 rounded border border-white/10 bg-white/5 hover:bg-white/5 group"
+            class="flex items-center justify-between gap-2 px-2 py-1 rounded border border-white/10 bg-white/5 hover:bg-white/5 group/task"
           >
             <div class="flex items-center gap-2">
               <input
@@ -338,9 +344,9 @@ const ungroupedTasks = computed(() => store.ungroupedTasks)
                 {{ t.title }}
               </p>
             </div>
-            <!-- Hover icons -->
+            <!-- Hover icons (only on hovered task row) -->
             <div
-              class="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity"
+              class="flex items-center gap-1 opacity-0 group-hover/task:opacity-100 transition-opacity"
             >
               <button class="p-1 text-slate-300 hover:text-white hover:bg-white/10 rounded">
                 <i class="fa-solid fa-pencil text-xs"></i>
